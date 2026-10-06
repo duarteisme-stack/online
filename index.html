@@ -53,52 +53,46 @@
     <!-- ===== DASHBOARD TAB ===== -->
     <section id="dashTab">
       <div class="grid md:grid-cols-3 gap-4">
-        <!-- Photo card -->
         <div class="bg-white rounded-2xl shadow p-5 text-center">
           <h2 class="font-bold text-slate-700 mb-3">2×2 Photo</h2>
           <div id="photoPreview" class="w-40 h-40 mx-auto rounded-lg bg-slate-200 flex items-center justify-center overflow-hidden text-slate-400 text-sm">No photo</div>
-          <input id="photoFile" type="file" accept="image/*" class="hidden" onchange="previewPhoto(this)">
-          <button onclick="document.getElementById('photoFile').click()" class="mt-3 w-full bg-slate-200 hover:bg-slate-300 text-sm font-semibold py-2 rounded-lg">Upload 2×2 Photo</button>
+          <input id="photoFile" type="file" accept="image/png,image/jpeg" class="hidden" onchange="previewPhoto(this)">
+          <button onclick="photoFile.click()" class="mt-3 w-full bg-slate-200 hover:bg-slate-300 text-sm font-semibold py-2 rounded-lg">Upload 2×2 Photo</button>
         </div>
-
-        <!-- Info card -->
         <div class="bg-white rounded-2xl shadow p-5 md:col-span-2">
-          <h2 class="font-bold text-slate-700 mb-3">Basic Information</h2>
+          <h2 id="formTitle" class="font-bold text-slate-700 mb-3">Add New Person</h2>
           <div class="grid sm:grid-cols-2 gap-3">
-            <div><label class="text-xs font-semibold text-slate-500">Full Name</label>
-              <input id="fName" class="info-field w-full border rounded-lg px-3 py-2 mt-1" placeholder="Leave blank if none"></div>
+            <div><label class="text-xs font-semibold text-slate-500">Full Name <span class="text-red-500">*</span></label>
+              <input id="fName" class="w-full border rounded-lg px-3 py-2 mt-1"></div>
+            <div><label class="text-xs font-semibold text-slate-500">Date of Birth <span class="text-red-500">*</span></label>
+              <input id="fDob" type="date" class="w-full border rounded-lg px-3 py-2 mt-1"></div>
             <div><label class="text-xs font-semibold text-slate-500">Contact Number</label>
-              <input id="fContact" class="info-field w-full border rounded-lg px-3 py-2 mt-1" placeholder="Leave blank if none"></div>
+              <input id="fContact" class="w-full border rounded-lg px-3 py-2 mt-1"></div>
             <div><label class="text-xs font-semibold text-slate-500">Email</label>
-              <input id="fEmail" type="email" class="info-field w-full border rounded-lg px-3 py-2 mt-1" placeholder="Leave blank if none"></div>
-            <div><label class="text-xs font-semibold text-slate-500">Address</label>
-              <input id="fAddress" class="info-field w-full border rounded-lg px-3 py-2 mt-1" placeholder="Leave blank if none"></div>
+              <input id="fEmail" type="email" class="w-full border rounded-lg px-3 py-2 mt-1"></div>
+            <div class="sm:col-span-2"><label class="text-xs font-semibold text-slate-500">Address</label>
+              <input id="fAddress" class="w-full border rounded-lg px-3 py-2 mt-1"></div>
             <div class="sm:col-span-2"><label class="text-xs font-semibold text-slate-500">Notes</label>
-              <textarea id="fNotes" rows="2" class="info-field w-full border rounded-lg px-3 py-2 mt-1" placeholder="Leave blank if none"></textarea></div>
+              <textarea id="fNotes" rows="2" class="w-full border rounded-lg px-3 py-2 mt-1"></textarea></div>
           </div>
-
           <div class="flex flex-wrap gap-2 mt-4">
-            <button onclick="saveInfo()" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg">💾 Update Info</button>
+            <button id="addBtn" onclick="savePerson('add')" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">➕ Add Person</button>
+            <button id="updBtn" onclick="savePerson('update')" disabled class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">💾 Update Selected</button>
+            <button onclick="clearPerson()" class="bg-slate-200 hover:bg-slate-300 text-sm font-semibold px-4 py-2 rounded-lg">New / Clear</button>
             <label class="bg-slate-200 hover:bg-slate-300 text-sm font-semibold px-4 py-2 rounded-lg cursor-pointer">
-              📄 Upload .txt (Notepad) <input id="txtFile" type="file" accept=".txt" class="hidden" onchange="loadTxt(this)">
+              📄 Upload .txt <input id="txtFile" type="file" accept=".txt" class="hidden" onchange="loadTxt(this)">
             </label>
           </div>
-          <p id="infoMsg" class="text-sm text-green-600 mt-2 hidden"></p>
-          <div class="mt-4 pt-3 border-t text-xs text-slate-400">Tip: .txt format → one per line: <code>name: Juan Dela Cruz</code></div>
+          <p id="infoMsg" class="text-sm mt-2 hidden"></p>
+          <div class="mt-4 pt-3 border-t text-xs text-slate-400">.txt format, one per line: <code>name: Juan Dela Cruz</code>, <code>dob: 1990-05-20</code>, contact, email, address, notes</div>
         </div>
       </div>
-
-      <!-- Records -->
       <div class="bg-white rounded-2xl shadow p-5 mt-4">
-        <h2 class="font-bold text-slate-700 mb-3">Saved Records</h2>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead><tr class="text-left text-slate-500 border-b">
-              <th class="py-2 pr-2">Name</th><th class="pr-2">Contact</th><th class="pr-2">Email</th><th class="pr-2">Address</th><th class="pr-2">Notes</th><th>Photo</th>
-            </tr></thead>
-            <tbody id="recordsBody"></tbody>
-          </table>
+        <div class="flex items-center justify-between gap-2 mb-3">
+          <h2 class="font-bold text-slate-700">Saved People <span class="text-xs font-normal text-slate-400">(click to edit)</span></h2>
+          <input id="peopleSearch" oninput="renderPeople()" placeholder="Search name / email" class="border rounded-lg px-3 py-1.5 text-sm w-48">
         </div>
+        <div id="peopleList" class="grid sm:grid-cols-2 gap-2 max-h-96 overflow-y-auto"></div>
       </div>
     </section>
 
@@ -164,12 +158,12 @@
           <input id="pAmount" type="number" min="0" step="0.01" class="w-full border rounded-lg px-3 py-2 mt-1 mb-3" placeholder="0.00">
           <label class="text-xs font-semibold text-slate-500">Payment Method</label>
           <select id="pMethod" class="w-full border rounded-lg px-3 py-2 mt-1 mb-3"><option>Cash</option><option>GCash</option><option>Card</option><option>Bank Transfer</option></select>
-          <label class="text-xs font-semibold text-slate-500">Address (for the info file)</label>
-          <input id="pAddress" class="w-full border rounded-lg px-3 py-2 mt-1 mb-3" placeholder="Optional">
-          <label class="text-xs font-semibold text-slate-500">2×2 Photo (for the info file)</label>
-          <div class="flex items-center gap-3 mt-1 mb-3">
-            <img id="pPhotoPrev" class="w-16 h-16 object-cover rounded border hidden" alt="">
-            <input id="pPhoto" type="file" accept="image/png,image/jpeg" onchange="pPhotoChanged(this)" class="text-sm">
+          <div class="border rounded-xl p-3 bg-slate-50 mb-3">
+            <p class="text-xs font-bold text-slate-500 uppercase mb-2">Record lookup (Basic Information file)</p>
+            <input id="lkName" oninput="lookupPerson()" class="w-full border rounded-lg px-3 py-2 mb-2 bg-white" placeholder="Type the person's full name">
+            <input id="lkDob" type="date" onchange="lookupPerson()" class="w-full border rounded-lg px-3 py-2 bg-white">
+            <p class="text-xs text-slate-400 mt-1">Date of birth is optional. Use it when several people share a name.</p>
+            <div id="lkResult" class="mt-2 text-sm"></div>
           </div>
           <label class="flex items-center gap-2 mb-3 text-sm"><input id="pSendInfo" type="checkbox" checked class="w-4 h-4 accent-green-600"> Also email the Basic Information file (with photo)</label>
           <button onclick="markPaid()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 rounded-lg">✅ Mark Paid &amp; Email Receipt</button>
@@ -203,7 +197,7 @@ async function checkAdmin(user){
   if(!data || !data.is_admin){ await sb.auth.signOut(); loginErr.textContent="Not an admin account."; loginErr.classList.remove('hidden'); return; }
   isAdmin = true;
   loginView.classList.add('hidden'); appView.classList.remove('hidden');
-  await loadInfo(); await loadAppointments();
+  await loadPeople(); await loadAppointments();
 }
 async function doLogout(){ await sb.auth.signOut(); location.reload(); }
 sb.auth.onAuthStateChange((e,s)=>{ if(e==='SIGNED_IN'&&s?.user&&!isAdmin) checkAdmin(s.user); });
@@ -212,61 +206,77 @@ sb.auth.onAuthStateChange((e,s)=>{ if(e==='SIGNED_IN'&&s?.user&&!isAdmin) checkA
 function showTab(t){
   [['dash',dashTab,tabDash],['appt',apptTab,tabAppt],['paid',paidTab,tabPaid]].forEach(([k,sec,btn])=>{
     sec.classList.toggle('hidden',k!==t); btn.classList.toggle('active',k===t); });
-  if(t!=='dash') loadAppointments();
+  if(t!=='dash') loadAppointments(); if(t==='paid') loadPeople();
 }
 
-/* ================= DASHBOARD ================= */
-async function loadInfo(){
-  const { data: { user } } = await sb.auth.getUser();
-  const { data } = await sb.from('profiles').select('*').eq('id', user.id).single();
-  if(!data) return;
-  fName.value=data.full_name||''; fContact.value=data.contact||''; fEmail.value=data.email||'';
-  fAddress.value=data.address||''; fNotes.value=data.notes||'';
-  if(data.photo_url) photoPreview.innerHTML=`<img src="${data.photo_url}" class="w-full h-full object-cover">`;
-  loadRecords();
+/* ================= DASHBOARD (people records) ================= */
+let people=[], selId=null, lkPerson=null;
+const FIELDS=[['full_name','fName'],['birth_date','fDob'],['contact','fContact'],['email','fEmail'],['address','fAddress'],['notes','fNotes']];
+const refId=id=>'#'+id.slice(0,6).toUpperCase();
+function setInfoMsg(t,c){ infoMsg.innerHTML=t; infoMsg.className='text-sm mt-2 '+c; infoMsg.classList.remove('hidden'); }
+async function loadPeople(){
+  const { data, error } = await sb.from('people').select('*').order('full_name');
+  if(error) setInfoMsg('⚠️ '+esc(error.message)+' (did you run people-table.sql?)','text-red-500');
+  people=data||[]; renderPeople();
 }
-async function loadRecords(){
-  const { data } = await sb.from('profiles').select('*').order('updated_at',{ascending:false});
-  recordsBody.innerHTML = (data||[]).map(r=>`<tr class="border-b">
-    <td class="py-2 pr-2">${r.full_name||'<span class="text-slate-300">—</span>'}</td>
-    <td class="pr-2">${r.contact||'<span class="text-slate-300">—</span>'}</td>
-    <td class="pr-2">${r.email||'<span class="text-slate-300">—</span>'}</td>
-    <td class="pr-2">${r.address||'<span class="text-slate-300">—</span>'}</td>
-    <td class="pr-2">${r.notes||'<span class="text-slate-300">—</span>'}</td>
-    <td>${r.photo_url?`<img src="${r.photo_url}" class="w-10 h-10 rounded object-cover">`:'<span class="text-slate-300">—</span>'}</td></tr>`).join('');
+function renderPeople(){
+  const q=(peopleSearch.value||'').trim().toLowerCase();
+  const list=people.filter(p=>!q||(p.full_name||'').toLowerCase().includes(q)||(p.email||'').toLowerCase().includes(q));
+  peopleList.innerHTML=list.length?list.map(p=>`<div onclick="selectPerson('${p.id}')" class="flex items-center gap-3 border rounded-lg p-3 cursor-pointer hover:bg-blue-50 ${p.id===selId?'bg-blue-50 border-blue-400':'bg-slate-50'}">
+    ${p.photo_url?`<img src="${esc(p.photo_url)}" class="w-12 h-12 rounded object-cover">`:'<div class="w-12 h-12 rounded bg-slate-200 shrink-0"></div>'}
+    <div class="min-w-0 text-sm"><div class="font-semibold text-slate-700">${esc(p.full_name)} <span class="text-xs font-normal text-slate-400">${refId(p.id)}</span></div>
+    <div class="text-xs text-slate-500 truncate">DOB ${esc(p.birth_date)} · ${esc(p.email||'—')} · ${esc(p.contact||'—')}</div></div></div>`).join(''):'<p class="text-slate-400 text-sm">No records found.</p>';
 }
-async function saveInfo(){
-  const { data:{user} } = await sb.auth.getUser();
-  const upd = {};
-  // leave blank if empty, update if has entry
-  [['full_name',fName],['contact',fContact],['email',fEmail],['address',fAddress],['notes',fNotes]]
-    .forEach(([k,el])=>{ const v=el.value.trim(); if(v) upd[k]=v; });
-  const { error } = await sb.from('profiles').update(upd).eq('id', user.id);
-  const f = photoFile.files[0];
+function setMode(){ updBtn.disabled=!selId; addBtn.disabled=!!selId; }
+function selectPerson(id){
+  const p=people.find(x=>x.id===id); if(!p) return; selId=id;
+  FIELDS.forEach(([k,el])=>document.getElementById(el).value=p[k]||'');
+  photoFile.value=''; photoPreview.innerHTML=p.photo_url?`<img src="${esc(p.photo_url)}" class="w-full h-full object-cover">`:'No photo';
+  formTitle.textContent='Editing: '+p.full_name; infoMsg.classList.add('hidden'); setMode(); renderPeople(); window.scrollTo({top:0,behavior:'smooth'});
+}
+function clearPerson(keepMsg){
+  FIELDS.forEach(([k,el])=>document.getElementById(el).value=''); photoFile.value=''; photoPreview.textContent='No photo';
+  selId=null; formTitle.textContent='Add New Person'; if(keepMsg!==true) infoMsg.classList.add('hidden'); setMode(); renderPeople();
+}
+async function savePerson(mode){
+  const v={}; FIELDS.forEach(([k,el])=>{ const x=document.getElementById(el).value.trim(); v[k]=x||null; });
+  if(!v.full_name||!v.birth_date) return setInfoMsg('⚠️ Full name and date of birth are required.','text-red-500');
+  const same=people.filter(p=>p.id!==selId&&(p.full_name||'').trim().toLowerCase()===v.full_name.toLowerCase());
+  const dup=same.find(p=>p.birth_date===v.birth_date);
+  if(dup) return setInfoMsg(`⚠️ <b>Duplicate:</b> ${esc(dup.full_name)} (${refId(dup.id)}) with the same date of birth already exists. Click them in the list to update instead.`,'text-red-500');
+  if(same.length && !confirm(`Another person named "${v.full_name}" already exists with a different date of birth:\n`+same.map(p=>`• ${refId(p.id)} · DOB ${p.birth_date}`).join('\n')+`\n\nOK = save as a separate person\nCancel = go back`)) return;
+  setInfoMsg('⏳ Saving...','text-slate-500'); v.updated_at=new Date().toISOString();
+  let id=selId, err;
+  if(mode==='update'){ err=(await sb.from('people').update(v).eq('id',id)).error; }
+  else { const r=await sb.from('people').insert(v).select().single(); err=r.error; id=r.data&&r.data.id; }
+  if(err) return setInfoMsg('⚠️ '+esc(err.code==='23505'?'Duplicate: same name and date of birth already exist.':err.message),'text-red-500');
+  let note='';
+  const f=photoFile.files[0];
   if(f){
-    const path = `${user.id}/photo.${f.name.split('.').pop()}`;
-    const { error:upErr } = await sb.storage.from('photos').upload(path, f, { upsert:true });
-    if(!upErr){ const { data:url } = sb.storage.from('photos').getPublicUrl(path); upd.photo_url=url.publicUrl; await sb.from('profiles').update({photo_url:url.publicUrl}).eq('id',user.id); }
+    const path=`people/${id}.${f.name.split('.').pop().toLowerCase()}`;
+    const up=await sb.storage.from('photos').upload(path,f,{upsert:true});
+    if(up.error) note=' (photo upload failed: '+esc(up.error.message)+')';
+    else await sb.from('people').update({photo_url:sb.storage.from('photos').getPublicUrl(path).data.publicUrl+'?v='+Date.now()}).eq('id',id);
   }
-  infoMsg.textContent = error? error.message : "✅ Info updated!"; 
-  infoMsg.className = "text-sm mt-2 " + (error?"text-red-500":"text-green-600");
-  infoMsg.classList.remove('hidden'); loadInfo();
+  setInfoMsg(`✅ ${mode==='update'?'Updated':'Added'}: <b>${esc(v.full_name)}</b>${note}`,note?'text-orange-600':'text-green-600');
+  await loadPeople(); clearPerson(true);
 }
 function previewPhoto(inp){
-  const f = inp.files[0]; if(!f) return;
-  const r = new FileReader(); r.onload=e=> photoPreview.innerHTML=`<img src="${e.target.result}" class="w-full h-full object-cover">`; r.readAsDataURL(f);
+  const f=inp.files[0]; if(!f) return;
+  const r=new FileReader(); r.onload=e=>photoPreview.innerHTML=`<img src="${e.target.result}" class="w-full h-full object-cover">`; r.readAsDataURL(f);
 }
 function loadTxt(inp){
-  const f = inp.files[0]; if(!f) return;
-  const r = new FileReader();
-  r.onload = e => {
-    const map = { name:'fName', contact:'fContact', email:'fEmail', address:'fAddress', notes:'fNotes' };
+  const f=inp.files[0]; if(!f) return; const r=new FileReader();
+  r.onload=e=>{
+    const map={name:'fName',fullname:'fName',dob:'fDob',birthdate:'fDob',dateofbirth:'fDob',birthday:'fDob',contact:'fContact',contactnumber:'fContact',email:'fEmail',address:'fAddress',notes:'fNotes'};
     e.target.result.split(/\r?\n/).forEach(line=>{
-      const m = line.match(/^\s*([^:]+):\s*(.+)$/); if(!m) return;
-      const key = m[1].trim().toLowerCase().replace(/[.\s]/g,'');
-      const el = map[key]; if(el) document.getElementById(el).value = m[2].trim();
+      const m=line.match(/^\s*([^:]+):\s*(.+)$/); if(!m) return;
+      const el=map[m[1].trim().toLowerCase().replace(/[.\s_]/g,'')]; if(!el) return;
+      let val=m[2].trim();
+      if(el==='fDob'&&!/^\d{4}-\d{2}-\d{2}$/.test(val)){ const d=new Date(val); val=isNaN(d)?'':localDate(d); }
+      document.getElementById(el).value=val;
     });
-    infoMsg.textContent="📄 .txt loaded — click Update Info to save."; infoMsg.className="text-sm text-blue-600 mt-2"; infoMsg.classList.remove('hidden');
+    setInfoMsg('📄 .txt loaded. Click Add Person (or Update Selected) to save.','text-blue-600'); inp.value='';
   };
   r.readAsText(f);
 }
@@ -365,27 +375,33 @@ function renderPaidList(){
 function selectPay(id){
   const a=allAppts.find(x=>x.id===id); if(!a) return; paySel=id;
   payWho.innerHTML=`Customer: <b>${esc(a.client_name)}</b> (${esc(a.email)})`+(a.paid?' — already paid, you can resend the receipt':'');
-  pAddress.value=a.address||''; pPhoto.value=''; if(a.photo_url){pPhotoPrev.src=a.photo_url;pPhotoPrev.classList.remove('hidden');}else pPhotoPrev.classList.add('hidden'); pAmount.value=a.amount||''; pMethod.value=a.payment_method||'Cash'; payMsg.classList.add('hidden'); renderPaidList();
+  lkName.value=a.client_name||''; lkDob.value=''; lookupPerson(); pAmount.value=a.amount||''; pMethod.value=a.payment_method||'Cash'; payMsg.classList.add('hidden'); renderPaidList();
 }
-function pPhotoChanged(inp){ const f=inp.files[0]; if(!f) return; const r=new FileReader();
-  r.onload=e=>{ pPhotoPrev.src=e.target.result; pPhotoPrev.classList.remove('hidden'); }; r.readAsDataURL(f); }
-const toDataUrl = blob => new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(blob); });
+const toDataUrl=blob=>new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(blob); });
+function personCard(p){
+  return `<div class="flex items-center gap-3">${p.photo_url?`<img src="${esc(p.photo_url)}" class="w-14 h-14 rounded object-cover border">`:'<div class="w-14 h-14 rounded bg-slate-200"></div>'}
+    <div class="text-xs"><div class="font-semibold text-slate-700 text-sm">${esc(p.full_name)} <span class="text-slate-400 font-normal">${refId(p.id)}</span></div>
+    DOB ${esc(p.birth_date)}<br>${esc(p.email||'—')} · ${esc(p.contact||'—')}<br>${esc(p.address||'No address')}</div></div>`;
+}
+function pickPerson(id){ lkPerson=people.find(x=>x.id===id)||null; lkResult.innerHTML='<p class="text-green-600 font-semibold mb-1">✅ Record found</p>'+(lkPerson?personCard(lkPerson):''); }
+function lookupPerson(){
+  const n=lkName.value.trim().toLowerCase(), d=lkDob.value; lkPerson=null;
+  if(!n){ lkResult.innerHTML=''; return; }
+  let m=people.filter(p=>(p.full_name||'').trim().toLowerCase()===n&&(!d||p.birth_date===d));
+  if(!m.length) m=people.filter(p=>(p.full_name||'').toLowerCase().includes(n)&&(!d||p.birth_date===d));
+  if(!m.length){ lkResult.innerHTML=`<p class="text-red-500 font-semibold">⚠️ No person record found${d?' with that name and date of birth':' with that name'}. Add them in the Dashboard first.</p>`; return; }
+  if(m.length===1){ pickPerson(m[0].id); return; }
+  lkResult.innerHTML='<p class="text-orange-600 font-semibold mb-1">⚠️ '+m.length+' matches. Tap the right person or enter their date of birth:</p>'+
+    m.map(p=>`<div onclick="pickPerson('${p.id}')" class="border rounded-lg p-2 mb-1 cursor-pointer hover:bg-green-50 bg-white">${personCard(p)}</div>`).join('');
+}
 async function markPaid(){
   const show=(t,c)=>{ payMsg.innerHTML=t; payMsg.className='text-sm mt-3 '+c; payMsg.classList.remove('hidden'); };
   const a=allAppts.find(x=>x.id===paySel); if(!a) return show('⚠️ Select a customer first.','text-red-500');
   const amt=parseFloat(pAmount.value); if(!(amt>0)) return show('⚠️ Enter the amount paid.','text-red-500');
+  if(pSendInfo.checked&&!lkPerson) return show('⚠️ No person record selected for the Basic Information file. Add them in the Dashboard, pick a match above, or untick the box.','text-red-500');
   show('⏳ Saving & sending...','text-slate-500');
   const paidAt=a.paid_at||new Date().toISOString();
-  const upd={ paid:true, amount:amt, payment_method:pMethod.value, paid_at:paidAt, address:pAddress.value.trim()||a.address||null };
-  let photoData=null; const f=pPhoto.files[0];
-  if(f){
-    const path=`appointments/${a.id}.${f.name.split('.').pop().toLowerCase()}`;
-    const up=await sb.storage.from('photos').upload(path,f,{upsert:true});
-    if(up.error) return show('⚠️ Photo upload failed: '+esc(up.error.message),'text-red-500');
-    upd.photo_url=sb.storage.from('photos').getPublicUrl(path).data.publicUrl+'?v='+Date.now();
-    photoData=await toDataUrl(f);
-  } else if(a.photo_url){ try{ photoData=await toDataUrl(await (await fetch(a.photo_url)).blob()); }catch(e){} }
-  const { error } = await sb.from('appointments').update(upd).eq('id',a.id);
+  const { error } = await sb.from('appointments').update({ paid:true, amount:amt, payment_method:pMethod.value, paid_at:paidAt }).eq('id',a.id);
   if(error) return show('⚠️ '+esc(error.message)+' (did you run schema-update.sql?)','text-red-500');
   const ref='R-'+a.id.slice(0,8).toUpperCase(), when=new Date(paidAt).toLocaleString();
   const { jsPDF }=window.jspdf;
@@ -395,12 +411,13 @@ async function markPaid(){
   doc.text('Thank you for your payment!',20,120);
   let infoPdf=null;
   if(pSendInfo.checked){
+    const p=lkPerson; let photo=null;
+    if(p.photo_url){ try{ photo=await toDataUrl(await (await fetch(p.photo_url)).blob()); }catch(e){} }
     const d=new jsPDF(); d.setFontSize(20); d.text('BASIC INFORMATION',20,25); d.setFontSize(12);
-    [['Reference','#'+a.id.slice(0,6).toUpperCase()],['Full name',a.client_name],['Contact',a.contact],['Email',a.email],
-     ['Address',upd.address||'-'],['Appointment date',a.appointment_date],['Reason',a.reason||'-']].forEach(([k,v],i)=>{ d.text(k+':',20,45+i*10); d.text(d.splitTextToSize(String(v),90)[0],55,45+i*10); });
-    d.rect(150,40,50.8,50.8); // 2x2 inch photo box
-    if(photoData){ try{ d.addImage(photoData, photoData.includes('image/png')?'PNG':'JPEG',150,40,50.8,50.8); }catch(e){ d.text('(photo unsupported)',152,65); } }
-    else d.text('No photo',162,65);
+    [['Reference',refId(p.id)],['Full name',p.full_name],['Date of birth',p.birth_date],['Contact',p.contact||'-'],['Email',p.email||'-'],
+     ['Address',p.address||'-'],['Appointment date',a.appointment_date]].forEach(([k,v],i)=>{ d.text(k+':',20,45+i*10); d.text(d.splitTextToSize(String(v),90)[0],55,45+i*10); });
+    d.rect(150,40,50.8,50.8);
+    if(photo){ try{ d.addImage(photo, photo.includes('image/png')?'PNG':'JPEG',150,40,50.8,50.8); }catch(e){ d.text('(photo unsupported)',152,65); } } else d.text('No photo',162,65);
     infoPdf=d.output('datauristring');
   }
   const err=await callFn({ type:'receipt', to:a.email, name:a.client_name, receiptNo:ref, amount:amt.toFixed(2), method:pMethod.value,
