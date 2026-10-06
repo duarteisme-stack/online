@@ -7,6 +7,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
   body{font-family:'Segoe UI',system-ui,sans-serif}
   .tab-btn.active{background:#2563eb;color:#fff}
@@ -43,6 +44,7 @@
     <div class="max-w-5xl mx-auto px-4 flex gap-2 pb-3">
       <button id="tabDash" onclick="showTab('dash')" class="tab-btn active px-4 py-2 rounded-lg text-sm font-semibold bg-slate-200">Dashboard</button>
       <button id="tabAppt" onclick="showTab('appt')" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold bg-slate-200">Appointment</button>
+      <button id="tabPaid" onclick="showTab('paid')" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold bg-slate-200">Paid</button>
     </div>
   </header>
 
@@ -127,10 +129,17 @@
               <input id="rRelation" class="w-full border rounded-lg px-3 py-2 mt-1 bg-white" placeholder="e.g. Mother, Son, Friend"></div>
           </div>
 
+          <label class="text-xs font-semibold text-slate-500 block mt-3">Appointment Date</label>
+          <input id="aDate" type="date" onchange="checkDate()" class="w-full border rounded-lg px-3 py-2 mt-1">
+          <p id="availInfo" class="text-xs text-slate-500 mt-1"></p>
+          <p id="dateWarn" class="text-xs text-red-500 mt-1 hidden">⚠️ That date is already booked. Pick another.</p>
           <label class="text-xs font-semibold text-slate-500 block mt-3">Reason for Appointment</label>
           <textarea id="aReason" rows="3" class="w-full border rounded-lg px-3 py-2 mt-1" placeholder="Purpose of visit..."></textarea>
 
-          <button onclick="submitAppointment()" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg">📨 Submit Request</button>
+          <div class="flex gap-2 mt-4">
+            <button id="submitBtn" onclick="submitAppointment()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg">📨 Submit Request</button>
+            <button onclick="clearForm()" class="bg-slate-200 hover:bg-slate-300 font-semibold px-4 rounded-lg">New / Clear</button>
+          </div>
           <p id="apptMsg" class="text-sm mt-3 hidden"></p>
           <div id="qrResult" class="hidden mt-4 text-center border rounded-xl p-4 bg-slate-50">
             <p class="text-xs font-bold text-slate-500 uppercase mb-2">Your QR Code</p>
@@ -140,8 +149,35 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow p-5">
-          <h2 class="font-bold text-slate-700 mb-3">📅 Scheduled Appointments</h2>
+          <h2 class="font-bold text-slate-700 mb-3">📅 Scheduled Appointments <span class="text-xs font-normal text-slate-400">(click to edit)</span></h2>
           <div id="apptList" class="space-y-2 text-sm max-h-96 overflow-y-auto"></div>
+        </div>
+      </div>
+    </section>
+    <!-- ===== PAID TAB ===== -->
+    <section id="paidTab" class="hidden">
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-white rounded-2xl shadow p-5">
+          <h2 class="font-bold text-slate-700 mb-3">💳 Payment</h2>
+          <p id="payWho" class="text-sm text-slate-500 mb-3">Select a customer from the list →</p>
+          <label class="text-xs font-semibold text-slate-500">Amount (PHP)</label>
+          <input id="pAmount" type="number" min="0" step="0.01" class="w-full border rounded-lg px-3 py-2 mt-1 mb-3" placeholder="0.00">
+          <label class="text-xs font-semibold text-slate-500">Payment Method</label>
+          <select id="pMethod" class="w-full border rounded-lg px-3 py-2 mt-1 mb-3"><option>Cash</option><option>GCash</option><option>Card</option><option>Bank Transfer</option></select>
+          <label class="text-xs font-semibold text-slate-500">Address (for the info file)</label>
+          <input id="pAddress" class="w-full border rounded-lg px-3 py-2 mt-1 mb-3" placeholder="Optional">
+          <label class="text-xs font-semibold text-slate-500">2×2 Photo (for the info file)</label>
+          <div class="flex items-center gap-3 mt-1 mb-3">
+            <img id="pPhotoPrev" class="w-16 h-16 object-cover rounded border hidden" alt="">
+            <input id="pPhoto" type="file" accept="image/png,image/jpeg" onchange="pPhotoChanged(this)" class="text-sm">
+          </div>
+          <label class="flex items-center gap-2 mb-3 text-sm"><input id="pSendInfo" type="checkbox" checked class="w-4 h-4 accent-green-600"> Also email the Basic Information file (with photo)</label>
+          <button onclick="markPaid()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 rounded-lg">✅ Mark Paid &amp; Email Receipt</button>
+          <p id="payMsg" class="text-sm mt-3 hidden"></p>
+        </div>
+        <div class="bg-white rounded-2xl shadow p-5">
+          <h2 class="font-bold text-slate-700 mb-3">Customers</h2>
+          <div id="paidList" class="space-y-2 text-sm max-h-96 overflow-y-auto"></div>
         </div>
       </div>
     </section>
@@ -174,11 +210,9 @@ sb.auth.onAuthStateChange((e,s)=>{ if(e==='SIGNED_IN'&&s?.user&&!isAdmin) checkA
 
 /* ================= TABS ================= */
 function showTab(t){
-  dashTab.classList.toggle('hidden', t!=='dash');
-  apptTab.classList.toggle('hidden', t!=='appt');
-  tabDash.classList.toggle('active', t==='dash');
-  tabAppt.classList.toggle('active', t==='appt');
-  if(t==='appt') loadAppointments();
+  [['dash',dashTab,tabDash],['appt',apptTab,tabAppt],['paid',paidTab,tabPaid]].forEach(([k,sec,btn])=>{
+    sec.classList.toggle('hidden',k!==t); btn.classList.toggle('active',k===t); });
+  if(t!=='dash') loadAppointments();
 }
 
 /* ================= DASHBOARD ================= */
@@ -238,80 +272,141 @@ function loadTxt(inp){
 }
 
 /* ================= APPOINTMENT ================= */
+let editId=null, paySel=null, allAppts=[];
+const esc = t => String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function toggleRequester(){ requesterBox.classList.toggle('dim', !onBehalf.checked); }
-
-function localDate(d){
-  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+function localDate(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function booked(ex){ return allAppts.filter(a=>a.id!==ex).map(a=>a.appointment_date); }
+function nextFree(){ const b=new Set(booked(editId)); const d=new Date();
+  for(let i=0;i<365;i++){ const s=localDate(d); if(!b.has(s)) return s; d.setDate(d.getDate()+1); } return ''; }
+function checkDate(){ dateWarn.classList.toggle('hidden', !booked(editId).includes(aDate.value)); }
+function showAvail(){
+  const today=localDate(new Date()); aDate.min=today;
+  if(!aDate.value) aDate.value=nextFree();
+  const b=booked(editId).filter(x=>x>=today);
+  availInfo.innerHTML='Next available: <b class="text-green-600">'+nextFree()+'</b>'+(b.length?' · Booked: '+b.slice(0,15).join(', '):'');
+  checkDate();
 }
-async function nextAvailableDate(start){
-  let d = new Date(start);
-  for(let i=0;i<365;i++){
-    const ds = localDate(d);
-    const { data } = await sb.from('appointments').select('id').eq('appointment_date', ds).limit(1);
-    if(!data || data.length===0) return ds;
-    d.setDate(d.getDate()+1);   // 1 person per day → move to next day
-  }
-  return null;
-}
-
-async function submitAppointment(){
-  apptMsg.classList.remove('hidden');
-  if(!aName.value.trim() || !aContact.value.trim() || !aEmail.value.trim()){
-    apptMsg.textContent="⚠️ Name, contact and email are required."; apptMsg.className="text-sm text-red-500 mt-3"; return;
-  }
-  if(onBehalf.checked && !rName.value.trim()){
-    apptMsg.textContent="⚠️ Requester name is required when sending for someone."; apptMsg.className="text-sm text-red-500 mt-3"; return;
-  }
-  apptMsg.textContent="⏳ Finding available date & sending QR..."; apptMsg.className="text-sm text-slate-500 mt-3";
-
-  const date = await nextAvailableDate(new Date());
-  if(!date){ apptMsg.textContent="⚠️ Fully booked."; apptMsg.className="text-sm text-red-500 mt-3"; return; }
-
-  const payload = {
-    client_name:aName.value.trim(), contact:aContact.value.trim(), email:aEmail.value.trim(),
-    on_behalf:onBehalf.checked,
-    requester_name:onBehalf.checked?rName.value.trim():null,
-    requester_email:onBehalf.checked?rEmail.value.trim():null,
-    requester_relation:onBehalf.checked?rRelation.value.trim():null,
-    reason:aReason.value.trim(), appointment_date:date, status:'confirmed'
-  };
-  const { data, error } = await sb.from('appointments').insert(payload).select().single();
-  if(error){ apptMsg.textContent="⚠️ "+error.message; apptMsg.className="text-sm text-red-500 mt-3"; return; }
-
-  // QR code -> link that opens view.html with the appointment details
-  const details = { name:data.client_name, email:data.email, date:data.appointment_date, reason:(data.reason||'').slice(0,200) };
-  const base = location.origin + location.pathname.replace(/[^/]*$/, '');
-  const qrText = `${base}view.html?d=${encodeURIComponent(btoa(encodeURIComponent(JSON.stringify(details))))}`;
-  const qrEl = document.createElement('div');
-  new QRCode(qrEl, { text:qrText, width:300, height:300, correctLevel:QRCode.CorrectLevel.M });
-  await new Promise(r=>setTimeout(r,300));
-  const qrCanvas = qrEl.querySelector('canvas');
-  const qrDataUrl = qrCanvas ? qrCanvas.toDataURL('image/png') : qrEl.querySelector('img').src;
-
-  // show QR on screen with download button
-  qrImg.src = qrDataUrl; qrDownload.href = qrDataUrl; qrResult.classList.remove('hidden');
-
-  // send email via Brevo (Supabase Edge Function)
-  const resp = await fetch(`${SUPABASE_URL}/functions/v1/send-qr-email`, {
-    method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${SUPABASE_ANON_KEY}` },
-    body: JSON.stringify({ to:data.email, name:data.client_name, date:data.appointment_date, qrDataUrl, qrText })
-  });
-  const sent = resp.ok;
-  apptMsg.innerHTML = `✅ Appointment confirmed for <b>${date}</b>! QR code emailed to <b>${data.email}</b>${sent?'':' <span class="text-orange-500">(email failed — check edge function)</span>'}`;
-  apptMsg.className="text-sm text-green-600 mt-3";
-  ['aName','aContact','aEmail','rName','rEmail','rRelation','aReason'].forEach(id=>document.getElementById(id).value='');
-  onBehalf.checked=false; toggleRequester(); loadAppointments();
-}
-
 async function loadAppointments(){
   const { data } = await sb.from('appointments').select('*').order('appointment_date');
-  apptList.innerHTML = (data&&data.length) ? data.map(a=>`
-    <div class="border rounded-lg p-3 bg-slate-50">
-      <div class="font-semibold text-slate-700">${a.client_name} <span class="text-xs font-normal text-slate-400">→ ${a.appointment_date}</span></div>
-      <div class="text-slate-500">${a.email} · ${a.contact}</div>
-      ${a.on_behalf?`<div class="text-blue-600 text-xs mt-1">Sent by ${a.requester_name} (${a.requester_relation}) · ${a.requester_email}</div>`:''}
-      ${a.reason?`<div class="text-slate-500 italic mt-1">“${a.reason}”</div>`:''}
+  allAppts=data||[]; renderApptList(); renderPaidList(); showAvail();
+}
+function renderApptList(){
+  apptList.innerHTML = allAppts.length ? allAppts.map(a=>`
+    <div onclick="selectAppt('${a.id}')" class="border rounded-lg p-3 cursor-pointer hover:bg-blue-50 ${a.id===editId?'bg-blue-50 border-blue-400':'bg-slate-50'}">
+      <div class="font-semibold text-slate-700">${esc(a.client_name)} <span class="text-xs font-normal text-slate-400">→ ${esc(a.appointment_date)}</span> <span class="text-xs text-slate-400">#${a.id.slice(0,6).toUpperCase()}</span></div>
+      <div class="text-slate-500">${esc(a.email)} · ${esc(a.contact)}</div>
+      ${a.on_behalf?`<div class="text-blue-600 text-xs mt-1">Sent by ${esc(a.requester_name)} (${esc(a.requester_relation)}) · ${esc(a.requester_email)}</div>`:''}
+      ${a.reason?`<div class="text-slate-500 italic mt-1">“${esc(a.reason)}”</div>`:''}
     </div>`).join('') : '<p class="text-slate-400">No appointments yet.</p>';
+}
+function selectAppt(id){
+  const a=allAppts.find(x=>x.id===id); if(!a) return;
+  editId=id; aName.value=a.client_name||''; aContact.value=a.contact||''; aEmail.value=a.email||'';
+  onBehalf.checked=!!a.on_behalf; toggleRequester();
+  rName.value=a.requester_name||''; rEmail.value=a.requester_email||''; rRelation.value=a.requester_relation||'';
+  aReason.value=a.reason||''; aDate.value=a.appointment_date;
+  submitBtn.textContent='💾 Update & Resend QR'; qrResult.classList.add('hidden'); apptMsg.classList.add('hidden');
+  renderApptList(); showAvail(); window.scrollTo({top:0,behavior:'smooth'});
+}
+function clearForm(keepMsg){
+  ['aName','aContact','aEmail','rName','rEmail','rRelation','aReason','aDate'].forEach(id=>document.getElementById(id).value='');
+  editId=null; onBehalf.checked=false; toggleRequester(); submitBtn.textContent='📨 Submit Request';
+  if(keepMsg!==true){ qrResult.classList.add('hidden'); apptMsg.classList.add('hidden'); }
+  renderApptList(); showAvail();
+}
+async function callFn(body){
+  try{ const r=await fetch(`${SUPABASE_URL}/functions/v1/send-qr-email`,{method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':`Bearer ${SUPABASE_ANON_KEY}`},body:JSON.stringify(body)});
+    return r.ok?'':((await r.text()).slice(0,250)||('HTTP '+r.status)); }catch(e){ return String(e); }
+}
+async function submitAppointment(){
+  const show=(t,c)=>{ apptMsg.innerHTML=t; apptMsg.className='text-sm mt-3 '+c; apptMsg.classList.remove('hidden'); };
+  if(!aName.value.trim()||!aContact.value.trim()||!aEmail.value.trim()) return show('⚠️ Name, contact and email are required.','text-red-500');
+  if(onBehalf.checked&&!rName.value.trim()) return show('⚠️ Requester name is required when sending for someone.','text-red-500');
+  const date=aDate.value; if(!date) return show('⚠️ Choose a date.','text-red-500');
+  show('⏳ Saving & sending QR...','text-slate-500');
+  await loadAppointments();
+  if(booked(editId).includes(date)) return show('⚠️ That date is already booked. Pick another.','text-red-500');
+  const nm=aName.value.trim().toLowerCase();
+  const dup=allAppts.filter(x=>x.id!==editId && (x.client_name||'').trim().toLowerCase()===nm);
+  if(dup.length && !confirm(`Someone named "${aName.value.trim()}" already exists:\n`+dup.map(x=>`• #${x.id.slice(0,6).toUpperCase()} · ${x.email} · ${x.contact} · ${x.appointment_date}`).join('\n')+`\n\nOK = this is a DIFFERENT person (save as a separate record)\nCancel = go back`)) return show('Cancelled. Select the existing record from the list to edit it.','text-slate-500');
+  const payload={ client_name:aName.value.trim(), contact:aContact.value.trim(), email:aEmail.value.trim(), on_behalf:onBehalf.checked,
+    requester_name:onBehalf.checked?rName.value.trim():null, requester_email:onBehalf.checked?rEmail.value.trim():null,
+    requester_relation:onBehalf.checked?rRelation.value.trim():null, reason:aReason.value.trim(), appointment_date:date };
+  if(!editId) payload.status='confirmed';
+  const q = editId ? sb.from('appointments').update(payload).eq('id',editId) : sb.from('appointments').insert(payload);
+  const { data, error } = await q.select().single();
+  if(error) return show('⚠️ '+esc(error.message),'text-red-500');
+
+  const details={ name:data.client_name, email:data.email, date:data.appointment_date, reason:(data.reason||'').slice(0,200) };
+  const base=location.origin+location.pathname.replace(/[^/]*$/,'');
+  const qrText=`${base}view.html?d=${encodeURIComponent(btoa(encodeURIComponent(JSON.stringify(details))))}`;
+  const qrEl=document.createElement('div'); new QRCode(qrEl,{text:qrText,width:300,height:300,correctLevel:QRCode.CorrectLevel.M});
+  await new Promise(r=>setTimeout(r,300));
+  const cv=qrEl.querySelector('canvas'); const qrDataUrl=cv?cv.toDataURL('image/png'):qrEl.querySelector('img').src;
+  qrImg.src=qrDataUrl; qrDownload.href=qrDataUrl; qrResult.classList.remove('hidden');
+
+  const err=await callFn({ to:data.email, name:data.client_name, date:data.appointment_date, qrDataUrl, qrText });
+  show(`✅ Appointment ${editId?'updated':'confirmed'} for <b>${esc(data.appointment_date)}</b>.`+
+    (err?` <span class="text-orange-600">Email NOT sent: ${esc(err)}</span>`:` QR emailed to <b>${esc(data.email)}</b>.`), err?'text-slate-700':'text-green-600');
+  await loadAppointments(); clearForm(true);
+}
+
+/* ================= PAID ================= */
+function renderPaidList(){
+  paidList.innerHTML = allAppts.length ? allAppts.map(a=>`
+    <div onclick="selectPay('${a.id}')" class="border rounded-lg p-3 cursor-pointer hover:bg-green-50 ${a.id===paySel?'bg-green-50 border-green-500':'bg-slate-50'}">
+      <div class="font-semibold text-slate-700">${esc(a.client_name)}
+        <span class="text-xs px-2 py-0.5 rounded-full ml-1 ${a.paid?'bg-green-100 text-green-700':'bg-orange-100 text-orange-700'}">${a.paid?'Paid':'Unpaid'}</span> <span class="text-xs text-slate-400 font-normal">#${a.id.slice(0,6).toUpperCase()}</span></div>
+      <div class="text-slate-500 text-xs">${esc(a.appointment_date)} · ${esc(a.email)}${a.paid?' · PHP '+Number(a.amount||0).toFixed(2)+' ('+esc(a.payment_method||'')+')':''}</div>
+    </div>`).join('') : '<p class="text-slate-400">No customers yet.</p>';
+}
+function selectPay(id){
+  const a=allAppts.find(x=>x.id===id); if(!a) return; paySel=id;
+  payWho.innerHTML=`Customer: <b>${esc(a.client_name)}</b> (${esc(a.email)})`+(a.paid?' — already paid, you can resend the receipt':'');
+  pAddress.value=a.address||''; pPhoto.value=''; if(a.photo_url){pPhotoPrev.src=a.photo_url;pPhotoPrev.classList.remove('hidden');}else pPhotoPrev.classList.add('hidden'); pAmount.value=a.amount||''; pMethod.value=a.payment_method||'Cash'; payMsg.classList.add('hidden'); renderPaidList();
+}
+function pPhotoChanged(inp){ const f=inp.files[0]; if(!f) return; const r=new FileReader();
+  r.onload=e=>{ pPhotoPrev.src=e.target.result; pPhotoPrev.classList.remove('hidden'); }; r.readAsDataURL(f); }
+const toDataUrl = blob => new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(blob); });
+async function markPaid(){
+  const show=(t,c)=>{ payMsg.innerHTML=t; payMsg.className='text-sm mt-3 '+c; payMsg.classList.remove('hidden'); };
+  const a=allAppts.find(x=>x.id===paySel); if(!a) return show('⚠️ Select a customer first.','text-red-500');
+  const amt=parseFloat(pAmount.value); if(!(amt>0)) return show('⚠️ Enter the amount paid.','text-red-500');
+  show('⏳ Saving & sending...','text-slate-500');
+  const paidAt=a.paid_at||new Date().toISOString();
+  const upd={ paid:true, amount:amt, payment_method:pMethod.value, paid_at:paidAt, address:pAddress.value.trim()||a.address||null };
+  let photoData=null; const f=pPhoto.files[0];
+  if(f){
+    const path=`appointments/${a.id}.${f.name.split('.').pop().toLowerCase()}`;
+    const up=await sb.storage.from('photos').upload(path,f,{upsert:true});
+    if(up.error) return show('⚠️ Photo upload failed: '+esc(up.error.message),'text-red-500');
+    upd.photo_url=sb.storage.from('photos').getPublicUrl(path).data.publicUrl+'?v='+Date.now();
+    photoData=await toDataUrl(f);
+  } else if(a.photo_url){ try{ photoData=await toDataUrl(await (await fetch(a.photo_url)).blob()); }catch(e){} }
+  const { error } = await sb.from('appointments').update(upd).eq('id',a.id);
+  if(error) return show('⚠️ '+esc(error.message)+' (did you run schema-update.sql?)','text-red-500');
+  const ref='R-'+a.id.slice(0,8).toUpperCase(), when=new Date(paidAt).toLocaleString();
+  const { jsPDF }=window.jspdf;
+  const doc=new jsPDF(); doc.setFontSize(20); doc.text('OFFICIAL RECEIPT',20,25); doc.setFontSize(12);
+  [['Receipt No',ref],['Date paid',when],['Customer',a.client_name],['Appointment date',a.appointment_date],
+   ['Payment method',pMethod.value],['Amount paid','PHP '+amt.toFixed(2)]].forEach(([k,v],i)=>{ doc.text(k+':',20,45+i*10); doc.text(String(v),70,45+i*10); });
+  doc.text('Thank you for your payment!',20,120);
+  let infoPdf=null;
+  if(pSendInfo.checked){
+    const d=new jsPDF(); d.setFontSize(20); d.text('BASIC INFORMATION',20,25); d.setFontSize(12);
+    [['Reference','#'+a.id.slice(0,6).toUpperCase()],['Full name',a.client_name],['Contact',a.contact],['Email',a.email],
+     ['Address',upd.address||'-'],['Appointment date',a.appointment_date],['Reason',a.reason||'-']].forEach(([k,v],i)=>{ d.text(k+':',20,45+i*10); d.text(d.splitTextToSize(String(v),90)[0],55,45+i*10); });
+    d.rect(150,40,50.8,50.8); // 2x2 inch photo box
+    if(photoData){ try{ d.addImage(photoData, photoData.includes('image/png')?'PNG':'JPEG',150,40,50.8,50.8); }catch(e){ d.text('(photo unsupported)',152,65); } }
+    else d.text('No photo',162,65);
+    infoPdf=d.output('datauristring');
+  }
+  const err=await callFn({ type:'receipt', to:a.email, name:a.client_name, receiptNo:ref, amount:amt.toFixed(2), method:pMethod.value,
+    paidAt:when, apptDate:a.appointment_date, pdfDataUrl:doc.output('datauristring'), infoPdfDataUrl:infoPdf });
+  show('✅ Marked as paid.'+(err?` <span class="text-orange-600">Email NOT sent: ${esc(err)}</span>`:` Receipt${infoPdf?' + info file':''} emailed to <b>${esc(a.email)}</b>.`), err?'text-slate-700':'text-green-600');
+  await loadAppointments(); selectPay(a.id);
 }
 </script>
 </body>
