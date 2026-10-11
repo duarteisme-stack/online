@@ -75,6 +75,7 @@ body .cal-d.today{box-shadow:inset 0 0 0 1px var(--brass)}
 .cal-legend span::before{content:'';display:inline-block;width:.7rem;height:.7rem;border-radius:2px;margin-right:.3rem;vertical-align:-1px;background:var(--c)}
 body button.danger{background:transparent;border:1px solid #C9A0A0;color:#8A2B2B;border-radius:3px;font-weight:600;transition:.2s}
 body button.danger:hover:not(:disabled){background:#8A2B2B;border-color:#8A2B2B;color:#fff}
+.dbl{touch-action:manipulation;-webkit-user-select:none;user-select:none}
 :focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -165,11 +166,11 @@ body button.danger:hover:not(:disabled){background:#8A2B2B;border-color:#8A2B2B;
         </div>
       </div>
       <div class="bg-white rounded-2xl shadow p-5 mt-4">
-        <div class="flex items-center justify-between gap-2 mb-3">
-          <h2 class="font-bold text-slate-700">Saved People <span class="text-xs font-normal text-slate-400">(click to edit)</span></h2>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h2 class="font-bold text-slate-700">Saved People <span class="text-xs font-normal text-slate-400">(tap to edit, double-tap to delete)</span></h2>
           <input id="peopleSearch" oninput="renderPeople()" placeholder="Search name / email" class="border rounded-lg px-3 py-1.5 text-sm w-48">
         </div>
-        <div id="peopleList" class="grid sm:grid-cols-2 gap-2 max-h-96 overflow-y-auto"></div>
+        <div id="peopleList" class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-96 overflow-y-auto"></div>
       </div>
     </section>
 
@@ -223,7 +224,7 @@ body button.danger:hover:not(:disabled){background:#8A2B2B;border-color:#8A2B2B;
         </div>
 
         <div class="bg-white rounded-2xl shadow p-5">
-          <h2 class="font-bold text-slate-700 mb-3">Scheduled Appointments <span class="text-xs font-normal text-slate-400">(click to edit)</span></h2>
+          <h2 class="font-bold text-slate-700 mb-3">Scheduled Appointments <span class="text-xs font-normal text-slate-400">(tap to edit, double-tap to delete)</span></h2>
           <div id="apptList" class="space-y-2 text-sm max-h-96 overflow-y-auto"></div>
         </div>
       </div>
@@ -347,17 +348,22 @@ async function loadPeople(){
 function renderPeople(){
   const q=(peopleSearch.value||'').trim().toLowerCase();
   const list=people.filter(p=>!q||(p.full_name||'').toLowerCase().includes(q)||(p.email||'').toLowerCase().includes(q));
-  peopleList.innerHTML=list.length?list.map(p=>`<div onclick="selectPerson('${p.id}')" class="flex items-center gap-3 border rounded-lg p-3 cursor-pointer hover:bg-blue-50 ${p.id===selId?'bg-blue-50 border-blue-400':'bg-slate-50'}">
+  peopleList.innerHTML=list.length?list.map(p=>`<div onclick="tap('p','${p.id}')" class="dbl min-w-0 overflow-hidden flex items-center gap-3 border rounded-lg p-3 cursor-pointer hover:bg-blue-50 ${p.id===selId?'bg-blue-50 border-blue-400':'bg-slate-50'}">
     ${p.photo_url?`<img src="${esc(p.photo_url)}" class="w-12 h-12 rounded object-cover">`:'<div class="w-12 h-12 rounded bg-slate-200 shrink-0"></div>'}
     <div class="min-w-0 text-sm"><div class="font-semibold text-slate-700">${esc(p.full_name)} <span class="text-xs font-normal text-slate-400">${refId(p.id)}</span></div>
     <div class="text-xs text-slate-500 truncate">DOB ${esc(p.birth_date)} · ${esc(p.email||'—')} · ${esc(p.contact||'—')}</div></div></div>`).join(''):'<p class="text-slate-400 text-sm">No records found.</p>';
+}
+let lastTap={k:'',id:'',t:0};
+function tap(kind,id){ // single tap = select, quick second tap on the same row = delete (asks to confirm)
+  const n=Date.now(), dbl=lastTap.k===kind&&lastTap.id===id&&n-lastTap.t<450; lastTap=dbl?{k:'',id:'',t:0}:{k:kind,id,t:n};
+  if(kind==='p'){ if(dbl) deletePerson(); else selectPerson(id); } else { if(dbl) deleteAppt(); else selectAppt(id); }
 }
 function setMode(){ updBtn.disabled=!selId; addBtn.disabled=!!selId; delBtn.disabled=!selId; }
 function selectPerson(id){
   const p=people.find(x=>x.id===id); if(!p) return; selId=id;
   FIELDS.forEach(([k,el])=>document.getElementById(el).value=p[k]||'');
   photoFile.value=''; photoPreview.innerHTML=p.photo_url?`<img src="${esc(p.photo_url)}" class="w-full h-full object-cover">`:'No photo';
-  formTitle.textContent='Editing: '+p.full_name; infoMsg.classList.add('hidden'); setMode(); renderPeople(); window.scrollTo({top:0,behavior:'smooth'});
+  formTitle.textContent='Editing: '+p.full_name; infoMsg.classList.add('hidden'); setMode(); renderPeople(); setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),600);
 }
 function clearPerson(keepMsg){
   FIELDS.forEach(([k,el])=>document.getElementById(el).value=''); photoFile.value=''; photoPreview.textContent='No photo';
@@ -465,7 +471,7 @@ async function loadAppointments(){
 }
 function renderApptList(){
   apptList.innerHTML = allAppts.length ? allAppts.map(a=>`
-    <div onclick="selectAppt('${a.id}')" class="border rounded-lg p-3 cursor-pointer hover:bg-blue-50 ${a.id===editId?'bg-blue-50 border-blue-400':'bg-slate-50'}">
+    <div onclick="tap('a','${a.id}')" class="dbl border rounded-lg p-3 cursor-pointer hover:bg-blue-50 ${a.id===editId?'bg-blue-50 border-blue-400':'bg-slate-50'}">
       <div class="font-semibold text-slate-700">${esc(a.client_name)} <span class="text-xs font-normal text-slate-400">→ ${esc(a.appointment_date)}</span> <span class="text-xs text-slate-400">#${a.id.slice(0,6).toUpperCase()}</span></div>
       <div class="text-slate-500">${esc(a.email)} · ${esc(a.contact)}</div>
       ${a.on_behalf?`<div class="text-blue-600 text-xs mt-1">Sent by ${esc(a.requester_name)} (${esc(a.requester_relation)}) · ${esc(a.requester_email)}</div>`:''}
@@ -479,7 +485,7 @@ function selectAppt(id){
   rName.value=a.requester_name||''; rEmail.value=a.requester_email||''; rRelation.value=a.requester_relation||'';
   aReason.value=a.reason||''; aDate.value=a.appointment_date; calY=+a.appointment_date.slice(0,4); calM=+a.appointment_date.slice(5,7)-1; lookupAppt();
   submitBtn.textContent='Update & Resend QR'; cancelApptBtn.classList.remove('hidden'); qrResult.classList.add('hidden'); apptMsg.classList.add('hidden');
-  renderApptList(); showAvail(); window.scrollTo({top:0,behavior:'smooth'});
+  renderApptList(); showAvail(); setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),600);
 }
 function clearForm(keepMsg){
   ['aName','aContact','aEmail','rName','rEmail','rRelation','aReason','aDate'].forEach(id=>document.getElementById(id).value='');
