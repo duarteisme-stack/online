@@ -2,25 +2,40 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Appointment Details</title>
-<script src="https://cdn.tailwindcss.com"></script>
+<title>Appointment Pass</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,700&family=Hanken+Grotesk:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--em:#0E3B31;--brass:#B08D57;--brass2:#D2B17A;--stone:#EDF0EE;--ink:#14201C;--mute:#5C6B64}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem;background:var(--stone);font-family:'Hanken Grotesk',system-ui,sans-serif;color:var(--ink)}
+.pass{width:100%;max-width:380px;background:#fff;border:1px solid #D5DCD7;border-radius:4px;overflow:hidden}
+.top{background:repeating-linear-gradient(0deg,transparent 0 35px,rgba(176,141,87,.16) 35px 36px),var(--em);color:#EFE9DA;padding:1.6rem 1.5rem 1.4rem;border-bottom:2px solid var(--brass)}
+.seal{width:2.6rem;height:2.6rem;border:1px solid var(--brass2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--brass2);font-size:1.2rem}
+.top h1{font-family:'Bodoni Moda',serif;font-weight:500;font-size:1.7rem;margin:.9rem 0 0}
+.top p{margin:.2rem 0 0;color:#A9BDB4;font-size:.85rem}
+.body{padding:1.4rem 1.5rem 1.6rem}
+.row{padding:.7rem 0;border-bottom:1px solid #E3E9E5}.row:last-child{border:0}
+.k{font-size:.75rem;color:var(--mute);margin-bottom:.15rem}
+.v{font-size:1rem;word-break:break-word}
+.date{font-family:'Bodoni Moda',serif;font-size:1.7rem;color:var(--em)}
+.bad .top{background:#5B1F1F;border-bottom-color:#9B2C2C}.bad .seal{color:#F1C1C1;border-color:#F1C1C1}
+</style>
 </head>
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-4">
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-8 text-center">
-    <div class="mx-auto w-14 h-14 rounded-full bg-green-500 text-white flex items-center justify-center text-2xl">✓</div>
-    <h1 class="text-xl font-bold mt-3 text-slate-800">Valid Appointment</h1>
-    <div id="info" class="mt-5 text-left text-sm space-y-2"></div>
+<body>
+  <div class="pass" id="pass">
+    <div class="top"><div class="seal" id="seal">&#10003;</div><h1 id="title">Valid appointment</h1><p id="sub">Present this pass at the front desk.</p></div>
+    <div class="body" id="info"></div>
   </div>
 <script>
   const esc = t => String(t??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const row=(k,v,cls)=>`<div class="row"><div class="k">${k}</div><div class="v ${cls||''}">${esc(v)}</div></div>`;
   try{
     const d = JSON.parse(decodeURIComponent(atob(new URLSearchParams(location.search).get('d'))));
-    info.innerHTML = `
-      <p><b>Name:</b> ${esc(d.name)}</p>
-      <p><b>Email:</b> ${esc(d.email)}</p>
-      <p><b>Date:</b> <span class="text-green-600 font-bold">${esc(d.date)}</span></p>
-      ${d.reason?`<p><b>Reason:</b> ${esc(d.reason)}</p>`:''}`;
-  }catch(e){ info.innerHTML = '<p class="text-red-500">Invalid QR code.</p>'; }
+    info.innerHTML = row('Appointment date',d.date,'date') + row('Name',d.name) + row('Email',d.email) + (d.reason?row('Reason',d.reason):'');
+  }catch(e){
+    pass.classList.add('bad'); seal.innerHTML='&#10005;'; title.textContent='Invalid code'; sub.textContent='This QR code could not be read.'; info.innerHTML='';
+  }
 </script>
 </body>
 </html>

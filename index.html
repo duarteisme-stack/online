@@ -8,29 +8,102 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-  body{font-family:'Segoe UI',system-ui,sans-serif}
-  .tab-btn.active{background:#2563eb;color:#fff}
-  .dim{opacity:.35;filter:grayscale(.6);pointer-events:none;transition:.3s}
-  .fade{transition:.3s}
+:root{--ink:#14201C;--em:#0E3B31;--em2:#165244;--brass:#B08D57;--brass2:#D2B17A;--stone:#EDF0EE;--line:#D5DCD7;--mute:#5C6B64}
+body{font-family:'Hanken Grotesk',system-ui,sans-serif;background:var(--stone);color:var(--ink)}
+h1,h2,.serif{font-family:'Bodoni Moda',Georgia,serif}
+body h2{font-size:1.2rem;font-weight:600;letter-spacing:-.005em}
+.dim{opacity:.35;filter:grayscale(.6);pointer-events:none;transition:.3s}
+.fade{transition:.3s}
+/* login */
+.login-grid{display:grid;min-height:100vh}
+@media(min-width:768px){.login-grid{grid-template-columns:1.1fr 1fr}}
+.login-art{background:repeating-linear-gradient(0deg,transparent 0 35px,rgba(176,141,87,.16) 35px 36px),var(--em);color:#EFE9DA;padding:2.5rem 2rem;display:flex;flex-direction:column;justify-content:space-between;gap:2rem}
+.login-art .day{font-family:'Bodoni Moda',serif;font-size:clamp(5.5rem,22vw,12rem);line-height:.85;color:var(--brass2);font-weight:500}
+.login-art h1{font-size:clamp(1.6rem,4vw,2.3rem);line-height:1.15;font-weight:500;max-width:14ch}
+.login-art p{color:#A9BDB4;max-width:34ch;font-size:.95rem;line-height:1.55}
+.login-form{background:#FAFBFA;display:flex;align-items:center;justify-content:center;padding:2rem 1.5rem}
+.mark{display:inline-flex;align-items:center;justify-content:center;width:1.7rem;height:1.7rem;border:1px solid var(--brass2);color:var(--brass2);font-family:'Bodoni Moda',serif;font-size:1rem;margin-right:.6rem}
+/* chrome */
+body header.bg-white{background:var(--em);box-shadow:none;border-bottom:1px solid var(--brass)}
+header h1{color:#F2ECDD;font-size:1.1rem;font-weight:500;display:flex;align-items:center}
+header .text-red-500{color:var(--brass2)}
+body header .tab-btn{background:transparent;color:#9DB4AA;border-radius:0;padding:.6rem 1rem;border-bottom:2px solid transparent;font-weight:600}
+body header .tab-btn:hover{color:#fff}
+body header .tab-btn.active{color:#fff;background:transparent;border-bottom-color:var(--brass2)}
+/* surfaces */
+body .bg-slate-100{background:var(--stone)}
+body .bg-white.rounded-2xl{border:1px solid var(--line);border-top:2px solid var(--brass);border-radius:4px;box-shadow:none}
+body .rounded-xl,body .rounded-lg{border-radius:4px}
+body .shadow,body .shadow-xl,body .shadow-sm{box-shadow:none}
+body .bg-slate-50{background:#F6F8F7}
+body .bg-slate-200{background:#E3E9E5}
+body .border{border-color:var(--line)}
+body .text-slate-800,body .text-slate-700{color:var(--ink)}
+body .text-slate-600,body .text-slate-500{color:var(--mute)}
+body .text-slate-400{color:#8A9891}
+body .text-blue-600{color:var(--em2)}
+/* buttons */
+body button.bg-blue-600,body button.bg-green-600{background:var(--em);color:#fff;border:1px solid var(--em);border-radius:3px;font-weight:600;letter-spacing:.01em;transition:.2s}
+body button.hover\:bg-blue-700:hover,body button.hover\:bg-green-700:hover{background:var(--brass);border-color:var(--brass);color:var(--ink)}
+body button.bg-slate-200,body label.bg-slate-200{background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:3px;transition:.2s}
+body button.hover\:bg-slate-300:hover,body label.hover\:bg-slate-300:hover{background:#E3E9E5;border-color:var(--brass)}
+body button:disabled{opacity:.35}
+/* inputs */
+body input,body select,body textarea{border:1px solid var(--line);border-radius:3px;background:#fff;color:var(--ink);outline:none;transition:.15s}
+body input:focus,body select:focus,body textarea:focus{border-color:var(--em);box-shadow:0 0 0 3px rgba(176,141,87,.28)}
+body label.text-xs{font-weight:600;color:var(--mute)}
+/* rows */
+body .hover\:bg-blue-50:hover,body .hover\:bg-green-50:hover,body .bg-blue-50,body .bg-green-50{background:#F4EFE2}
+body .border-blue-400,body .border-green-500{border-color:var(--brass)}
+.cal{border:1px solid var(--line);border-radius:4px;padding:.7rem;margin-top:.6rem;background:#fff}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem;font-size:1.05rem}
+body .cal-head button{width:2.2rem;height:2.2rem;border:1px solid var(--line);border-radius:3px;background:#fff;font-size:1.1rem}
+body .cal-head button:hover{border-color:var(--brass)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;text-align:center}
+.cal-grid b{font-size:.7rem;color:var(--mute);font-weight:600;padding:.2rem 0}
+body .cal-d{aspect-ratio:1;border-radius:3px;font-size:.85rem;border:1px solid transparent;background:#F6F8F7;opacity:1}
+body .cal-d.free{background:#E3EFE9;color:var(--em);cursor:pointer}
+body .cal-d.free:hover{border-color:var(--brass)}
+body .cal-d.taken{background:#F3DADA;color:#8A2B2B;text-decoration:line-through;cursor:not-allowed}
+body .cal-d.past{color:#B5BFBA;background:transparent;cursor:default}
+body .cal-d.sel{background:var(--em);color:#fff;border-color:var(--brass)}
+body .cal-d.today{box-shadow:inset 0 0 0 1px var(--brass)}
+.cal-legend{display:flex;gap:.9rem;flex-wrap:wrap;font-size:.72rem;color:var(--mute);margin-top:.6rem}
+.cal-legend span::before{content:'';display:inline-block;width:.7rem;height:.7rem;border-radius:2px;margin-right:.3rem;vertical-align:-1px;background:var(--c)}
+:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body class="bg-slate-100 min-h-screen">
 
 <!-- ============ LOGIN ============ -->
-<div id="loginView" class="flex items-center justify-center min-h-screen p-4">
-  <div class="bg-white rounded-2xl shadow-xl w-full max-w-sm p-8">
-    <div class="text-center mb-6">
-      <div class="mx-auto w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center text-2xl font-bold">A</div>
-      <h1 class="text-xl font-bold mt-3 text-slate-800">Admin Login</h1>
-      <p class="text-sm text-slate-500">Online Appointment System</p>
+<div id="loginView" class="min-h-screen">
+  <div class="login-grid">
+    <div class="login-art">
+      <div class="serif text-lg flex items-center"><span class="mark">A</span>Appointment System</div>
+      <div>
+        <div id="loginDay" class="day">12</div>
+        <div class="serif text-xl mt-2" id="loginMonth" style="color:#EFE9DA"></div>
+        <div class="text-sm" id="loginWeek" style="color:#A9BDB4"></div>
+      </div>
+      <div><h1 class="serif mb-3">Every visit, scheduled with care.</h1>
+      <p>Sign in to manage bookings, client records and payments from one quiet place.</p></div>
     </div>
-    <label class="text-xs font-semibold text-slate-600">Email</label>
-    <input id="loginEmail" type="email" class="w-full border rounded-lg px-3 py-2 mt-1 mb-3 focus:ring-2 ring-blue-400 outline-none" placeholder="admin@email.com">
-    <label class="text-xs font-semibold text-slate-600">Password</label>
-    <input id="loginPass" type="password" class="w-full border rounded-lg px-3 py-2 mt-1 mb-4 focus:ring-2 ring-blue-400 outline-none" placeholder="••••••••">
-    <button onclick="doLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg">Sign In</button>
-    <p id="loginErr" class="text-red-500 text-sm mt-3 hidden"></p>
+    <div class="login-form">
+      <div class="w-full max-w-xs">
+        <h2 class="serif" style="font-size:1.8rem;font-weight:500">Welcome back</h2>
+        <p class="text-sm mb-6" style="color:var(--mute)">Administrator access</p>
+        <label class="text-xs font-semibold">Email</label>
+        <input id="loginEmail" type="email" class="w-full border px-3 py-2.5 mt-1 mb-4" placeholder="admin@email.com">
+        <label class="text-xs font-semibold">Password</label>
+        <input id="loginPass" type="password" class="w-full border px-3 py-2.5 mt-1 mb-5" placeholder="••••••••">
+        <button onclick="doLogin()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-3">Sign in</button>
+        <p id="loginErr" class="text-red-500 text-sm mt-3 hidden"></p>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -38,7 +111,7 @@
 <div id="appView" class="hidden">
   <header class="bg-white shadow-sm">
     <div class="max-w-5xl mx-auto flex items-center justify-between px-4 py-3">
-      <h1 class="font-bold text-slate-800">📅 Appointment System</h1>
+      <h1 class="serif"><span class="mark">A</span>Appointment System</h1>
       <button onclick="doLogout()" class="text-sm text-red-500 hover:underline">Sign out</button>
     </div>
     <div class="max-w-5xl mx-auto px-4 flex gap-2 pb-3">
@@ -76,11 +149,11 @@
               <textarea id="fNotes" rows="2" class="w-full border rounded-lg px-3 py-2 mt-1"></textarea></div>
           </div>
           <div class="flex flex-wrap gap-2 mt-4">
-            <button id="addBtn" onclick="savePerson('add')" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">➕ Add Person</button>
-            <button id="updBtn" onclick="savePerson('update')" disabled class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">💾 Update Selected</button>
+            <button id="addBtn" onclick="savePerson('add')" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">Add Person</button>
+            <button id="updBtn" onclick="savePerson('update')" disabled class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">Update Selected</button>
             <button onclick="clearPerson()" class="bg-slate-200 hover:bg-slate-300 text-sm font-semibold px-4 py-2 rounded-lg">New / Clear</button>
             <label class="bg-slate-200 hover:bg-slate-300 text-sm font-semibold px-4 py-2 rounded-lg cursor-pointer">
-              📄 Upload .txt <input id="txtFile" type="file" accept=".txt" class="hidden" onchange="loadTxt(this)">
+              Upload .txt <input id="txtFile" type="file" accept=".txt" class="hidden" onchange="loadTxt(this)">
             </label>
           </div>
           <p id="infoMsg" class="text-sm mt-2 hidden"></p>
@@ -126,24 +199,25 @@
           <label class="text-xs font-semibold text-slate-500 block mt-3">Appointment Date</label>
           <input id="aDate" type="date" onchange="checkDate()" class="w-full border rounded-lg px-3 py-2 mt-1">
           <p id="availInfo" class="text-xs text-slate-500 mt-1"></p>
-          <p id="dateWarn" class="text-xs text-red-500 mt-1 hidden">⚠️ That date is already booked. Pick another.</p>
+          <div id="cal" class="cal"></div>
+          <p id="dateWarn" class="text-xs text-red-500 mt-1 hidden">That date is already booked. Pick another.</p>
           <label class="text-xs font-semibold text-slate-500 block mt-3">Reason for Appointment</label>
           <textarea id="aReason" rows="3" class="w-full border rounded-lg px-3 py-2 mt-1" placeholder="Purpose of visit..."></textarea>
 
           <div class="flex gap-2 mt-4">
-            <button id="submitBtn" onclick="submitAppointment()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg">📨 Submit Request</button>
+            <button id="submitBtn" onclick="submitAppointment()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg">Submit Request</button>
             <button onclick="clearForm()" class="bg-slate-200 hover:bg-slate-300 font-semibold px-4 rounded-lg">New / Clear</button>
           </div>
           <p id="apptMsg" class="text-sm mt-3 hidden"></p>
           <div id="qrResult" class="hidden mt-4 text-center border rounded-xl p-4 bg-slate-50">
             <p class="text-xs font-bold text-slate-500 uppercase mb-2">Your QR Code</p>
             <img id="qrImg" class="mx-auto w-48 h-48" alt="QR code">
-            <a id="qrDownload" download="appointment-qr.png" class="inline-block mt-3 bg-slate-200 hover:bg-slate-300 text-sm font-semibold px-4 py-2 rounded-lg">⬇️ Download QR</a>
+            <a id="qrDownload" download="appointment-qr.png" class="inline-block mt-3 bg-slate-200 hover:bg-slate-300 text-sm font-semibold px-4 py-2 rounded-lg">Download QR</a>
           </div>
         </div>
 
         <div class="bg-white rounded-2xl shadow p-5">
-          <h2 class="font-bold text-slate-700 mb-3">📅 Scheduled Appointments <span class="text-xs font-normal text-slate-400">(click to edit)</span></h2>
+          <h2 class="font-bold text-slate-700 mb-3">Scheduled Appointments <span class="text-xs font-normal text-slate-400">(click to edit)</span></h2>
           <div id="apptList" class="space-y-2 text-sm max-h-96 overflow-y-auto"></div>
         </div>
       </div>
@@ -152,7 +226,7 @@
     <section id="paidTab" class="hidden">
       <div class="grid md:grid-cols-2 gap-4">
         <div class="bg-white rounded-2xl shadow p-5">
-          <h2 class="font-bold text-slate-700 mb-3">💳 Payment</h2>
+          <h2 class="font-bold text-slate-700 mb-3">Payment</h2>
           <p id="payWho" class="text-sm text-slate-500 mb-3">Select a customer from the list →</p>
           <label class="text-xs font-semibold text-slate-500">Amount (PHP)</label>
           <input id="pAmount" type="number" min="0" step="0.01" class="w-full border rounded-lg px-3 py-2 mt-1 mb-3" placeholder="0.00">
@@ -166,7 +240,7 @@
             <div id="lkResult" class="mt-2 text-sm"></div>
           </div>
           <label class="flex items-center gap-2 mb-3 text-sm"><input id="pSendInfo" type="checkbox" checked class="w-4 h-4 accent-green-600"> Also email the Basic Information file (with photo)</label>
-          <button onclick="markPaid()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 rounded-lg">✅ Mark Paid &amp; Email Receipt</button>
+          <button onclick="markPaid()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 rounded-lg">Mark Paid &amp; Email Receipt</button>
           <p id="payMsg" class="text-sm mt-3 hidden"></p>
         </div>
         <div class="bg-white rounded-2xl shadow p-5">
@@ -216,7 +290,7 @@ const refId=id=>'#'+id.slice(0,6).toUpperCase();
 function setInfoMsg(t,c){ infoMsg.innerHTML=t; infoMsg.className='text-sm mt-2 '+c; infoMsg.classList.remove('hidden'); }
 async function loadPeople(){
   const { data, error } = await sb.from('people').select('*').order('full_name');
-  if(error) setInfoMsg('⚠️ '+esc(error.message)+' (did you run people-table.sql?)','text-red-500');
+  if(error) setInfoMsg(''+esc(error.message)+' (did you run people-table.sql?)','text-red-500');
   people=data||[]; renderPeople();
 }
 function renderPeople(){
@@ -240,16 +314,16 @@ function clearPerson(keepMsg){
 }
 async function savePerson(mode){
   const v={}; FIELDS.forEach(([k,el])=>{ const x=document.getElementById(el).value.trim(); v[k]=x||null; });
-  if(!v.full_name||!v.birth_date) return setInfoMsg('⚠️ Full name and date of birth are required.','text-red-500');
+  if(!v.full_name||!v.birth_date) return setInfoMsg('Full name and date of birth are required.','text-red-500');
   const same=people.filter(p=>p.id!==selId&&(p.full_name||'').trim().toLowerCase()===v.full_name.toLowerCase());
   const dup=same.find(p=>p.birth_date===v.birth_date);
-  if(dup) return setInfoMsg(`⚠️ <b>Duplicate:</b> ${esc(dup.full_name)} (${refId(dup.id)}) with the same date of birth already exists. Click them in the list to update instead.`,'text-red-500');
+  if(dup) return setInfoMsg(`<b>Duplicate:</b> ${esc(dup.full_name)} (${refId(dup.id)}) with the same date of birth already exists. Click them in the list to update instead.`,'text-red-500');
   if(same.length && !confirm(`Another person named "${v.full_name}" already exists with a different date of birth:\n`+same.map(p=>`• ${refId(p.id)} · DOB ${p.birth_date}`).join('\n')+`\n\nOK = save as a separate person\nCancel = go back`)) return;
-  setInfoMsg('⏳ Saving...','text-slate-500'); v.updated_at=new Date().toISOString();
+  setInfoMsg('Saving...','text-slate-500'); v.updated_at=new Date().toISOString();
   let id=selId, err;
   if(mode==='update'){ err=(await sb.from('people').update(v).eq('id',id)).error; }
   else { const r=await sb.from('people').insert(v).select().single(); err=r.error; id=r.data&&r.data.id; }
-  if(err) return setInfoMsg('⚠️ '+esc(err.code==='23505'?'Duplicate: same name and date of birth already exist.':err.message),'text-red-500');
+  if(err) return setInfoMsg(''+esc(err.code==='23505'?'Duplicate: same name and date of birth already exist.':err.message),'text-red-500');
   let note='';
   const f=photoFile.files[0];
   if(f){
@@ -258,7 +332,7 @@ async function savePerson(mode){
     if(up.error) note=' (photo upload failed: '+esc(up.error.message)+')';
     else await sb.from('people').update({photo_url:sb.storage.from('photos').getPublicUrl(path).data.publicUrl+'?v='+Date.now()}).eq('id',id);
   }
-  setInfoMsg(`✅ ${mode==='update'?'Updated':'Added'}: <b>${esc(v.full_name)}</b>${note}`,note?'text-orange-600':'text-green-600');
+  setInfoMsg(`${mode==='update'?'Updated':'Added'}: <b>${esc(v.full_name)}</b>${note}`,note?'text-orange-600':'text-green-600');
   await loadPeople(); clearPerson(true);
 }
 function previewPhoto(inp){
@@ -276,25 +350,39 @@ function loadTxt(inp){
       if(el==='fDob'&&!/^\d{4}-\d{2}-\d{2}$/.test(val)){ const d=new Date(val); val=isNaN(d)?'':localDate(d); }
       document.getElementById(el).value=val;
     });
-    setInfoMsg('📄 .txt loaded. Click Add Person (or Update Selected) to save.','text-blue-600'); inp.value='';
+    setInfoMsg('.txt loaded. Click Add Person (or Update Selected) to save.','text-blue-600'); inp.value='';
   };
   r.readAsText(f);
 }
 
 /* ================= APPOINTMENT ================= */
-let editId=null, paySel=null, allAppts=[];
+let editId=null, paySel=null, allAppts=[], calY=null, calM=0;
 const esc = t => String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function toggleRequester(){ requesterBox.classList.toggle('dim', !onBehalf.checked); }
 function localDate(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 function booked(ex){ return allAppts.filter(a=>a.id!==ex).map(a=>a.appointment_date); }
 function nextFree(){ const b=new Set(booked(editId)); const d=new Date();
   for(let i=0;i<365;i++){ const s=localDate(d); if(!b.has(s)) return s; d.setDate(d.getDate()+1); } return ''; }
-function checkDate(){ dateWarn.classList.toggle('hidden', !booked(editId).includes(aDate.value)); }
+function checkDate(){ dateWarn.classList.toggle('hidden', !booked(editId).includes(aDate.value)); renderCal(); }
+function calNav(n){ calM+=n; if(calM<0){calM=11;calY--;} if(calM>11){calM=0;calY++;} renderCal(); }
+function pickDate(ds){ aDate.value=ds; checkDate(); }
+function renderCal(){
+  const now=new Date(), today=localDate(now); if(calY===null){ calY=now.getFullYear(); calM=now.getMonth(); }
+  const bk=new Map(); allAppts.forEach(a=>{ if(a.id!==editId) bk.set(a.appointment_date,a.client_name); });
+  const first=new Date(calY,calM,1), n=new Date(calY,calM+1,0).getDate(), pad=x=>String(x).padStart(2,'0');
+  let h=`<div class="cal-head"><button type="button" onclick="calNav(-1)" aria-label="Previous month">‹</button><span class="serif">${first.toLocaleString('en',{month:'long',year:'numeric'})}</span><button type="button" onclick="calNav(1)" aria-label="Next month">›</button></div><div class="cal-grid">`+
+    ['S','M','T','W','T','F','S'].map(d=>`<b>${d}</b>`).join('')+'<i></i>'.repeat(first.getDay());
+  for(let d=1; d<=n; d++){
+    const ds=`${calY}-${pad(calM+1)}-${pad(d)}`, past=ds<today, taken=bk.has(ds);
+    h+=`<button type="button" class="cal-d ${past?'past':taken?'taken':'free'} ${ds===aDate.value?'sel':''} ${ds===today?'today':''}" ${past||taken?'disabled':''} title="${taken?'Booked: '+esc(bk.get(ds)):''}" onclick="pickDate('${ds}')">${d}</button>`;
+  }
+  cal.innerHTML=h+'</div><div class="cal-legend"><span style="--c:#E3EFE9">Available</span><span style="--c:#F3DADA">Booked</span><span style="--c:#0E3B31">Selected</span></div>';
+}
 function showAvail(){
   const today=localDate(new Date()); aDate.min=today;
   if(!aDate.value) aDate.value=nextFree();
   const b=booked(editId).filter(x=>x>=today);
-  availInfo.innerHTML='Next available: <b class="text-green-600">'+nextFree()+'</b>'+(b.length?' · Booked: '+b.slice(0,15).join(', '):'');
+  availInfo.innerHTML='Next available: <b class="text-green-600">'+nextFree()+'</b>'+'. Tap an open day below.';
   checkDate();
 }
 async function loadAppointments(){
@@ -315,13 +403,13 @@ function selectAppt(id){
   editId=id; aName.value=a.client_name||''; aContact.value=a.contact||''; aEmail.value=a.email||'';
   onBehalf.checked=!!a.on_behalf; toggleRequester();
   rName.value=a.requester_name||''; rEmail.value=a.requester_email||''; rRelation.value=a.requester_relation||'';
-  aReason.value=a.reason||''; aDate.value=a.appointment_date;
-  submitBtn.textContent='💾 Update & Resend QR'; qrResult.classList.add('hidden'); apptMsg.classList.add('hidden');
+  aReason.value=a.reason||''; aDate.value=a.appointment_date; calY=+a.appointment_date.slice(0,4); calM=+a.appointment_date.slice(5,7)-1;
+  submitBtn.textContent='Update & Resend QR'; qrResult.classList.add('hidden'); apptMsg.classList.add('hidden');
   renderApptList(); showAvail(); window.scrollTo({top:0,behavior:'smooth'});
 }
 function clearForm(keepMsg){
   ['aName','aContact','aEmail','rName','rEmail','rRelation','aReason','aDate'].forEach(id=>document.getElementById(id).value='');
-  editId=null; onBehalf.checked=false; toggleRequester(); submitBtn.textContent='📨 Submit Request';
+  editId=null; calY=null; onBehalf.checked=false; toggleRequester(); submitBtn.textContent='Submit Request';
   if(keepMsg!==true){ qrResult.classList.add('hidden'); apptMsg.classList.add('hidden'); }
   renderApptList(); showAvail();
 }
@@ -332,12 +420,12 @@ async function callFn(body){
 }
 async function submitAppointment(){
   const show=(t,c)=>{ apptMsg.innerHTML=t; apptMsg.className='text-sm mt-3 '+c; apptMsg.classList.remove('hidden'); };
-  if(!aName.value.trim()||!aContact.value.trim()||!aEmail.value.trim()) return show('⚠️ Name, contact and email are required.','text-red-500');
-  if(onBehalf.checked&&!rName.value.trim()) return show('⚠️ Requester name is required when sending for someone.','text-red-500');
-  const date=aDate.value; if(!date) return show('⚠️ Choose a date.','text-red-500');
-  show('⏳ Saving & sending QR...','text-slate-500');
+  if(!aName.value.trim()||!aContact.value.trim()||!aEmail.value.trim()) return show('Name, contact and email are required.','text-red-500');
+  if(onBehalf.checked&&!rName.value.trim()) return show('Requester name is required when sending for someone.','text-red-500');
+  const date=aDate.value; if(!date) return show('Choose a date.','text-red-500');
+  show('Saving & sending QR...','text-slate-500');
   await loadAppointments();
-  if(booked(editId).includes(date)) return show('⚠️ That date is already booked. Pick another.','text-red-500');
+  if(booked(editId).includes(date)) return show('That date is already booked. Pick another.','text-red-500');
   const nm=aName.value.trim().toLowerCase();
   const dup=allAppts.filter(x=>x.id!==editId && (x.client_name||'').trim().toLowerCase()===nm);
   if(dup.length && !confirm(`Someone named "${aName.value.trim()}" already exists:\n`+dup.map(x=>`• #${x.id.slice(0,6).toUpperCase()} · ${x.email} · ${x.contact} · ${x.appointment_date}`).join('\n')+`\n\nOK = this is a DIFFERENT person (save as a separate record)\nCancel = go back`)) return show('Cancelled. Select the existing record from the list to edit it.','text-slate-500');
@@ -347,7 +435,7 @@ async function submitAppointment(){
   if(!editId) payload.status='confirmed';
   const q = editId ? sb.from('appointments').update(payload).eq('id',editId) : sb.from('appointments').insert(payload);
   const { data, error } = await q.select().single();
-  if(error) return show('⚠️ '+esc(error.message),'text-red-500');
+  if(error) return show(''+esc(error.message),'text-red-500');
 
   const details={ name:data.client_name, email:data.email, date:data.appointment_date, reason:(data.reason||'').slice(0,200) };
   const base=location.origin+location.pathname.replace(/[^/]*$/,'');
@@ -358,7 +446,7 @@ async function submitAppointment(){
   qrImg.src=qrDataUrl; qrDownload.href=qrDataUrl; qrResult.classList.remove('hidden');
 
   const err=await callFn({ to:data.email, name:data.client_name, date:data.appointment_date, qrDataUrl, qrText });
-  show(`✅ Appointment ${editId?'updated':'confirmed'} for <b>${esc(data.appointment_date)}</b>.`+
+  show(`Appointment ${editId?'updated':'confirmed'} for <b>${esc(data.appointment_date)}</b>.`+
     (err?` <span class="text-orange-600">Email NOT sent: ${esc(err)}</span>`:` QR emailed to <b>${esc(data.email)}</b>.`), err?'text-slate-700':'text-green-600');
   await loadAppointments(); clearForm(true);
 }
@@ -383,26 +471,26 @@ function personCard(p){
     <div class="text-xs"><div class="font-semibold text-slate-700 text-sm">${esc(p.full_name)} <span class="text-slate-400 font-normal">${refId(p.id)}</span></div>
     DOB ${esc(p.birth_date)}<br>${esc(p.email||'—')} · ${esc(p.contact||'—')}<br>${esc(p.address||'No address')}</div></div>`;
 }
-function pickPerson(id){ lkPerson=people.find(x=>x.id===id)||null; lkResult.innerHTML='<p class="text-green-600 font-semibold mb-1">✅ Record found</p>'+(lkPerson?personCard(lkPerson):''); }
+function pickPerson(id){ lkPerson=people.find(x=>x.id===id)||null; lkResult.innerHTML='<p class="text-green-600 font-semibold mb-1">Record found</p>'+(lkPerson?personCard(lkPerson):''); }
 function lookupPerson(){
   const n=lkName.value.trim().toLowerCase(), d=lkDob.value; lkPerson=null;
   if(!n){ lkResult.innerHTML=''; return; }
   let m=people.filter(p=>(p.full_name||'').trim().toLowerCase()===n&&(!d||p.birth_date===d));
   if(!m.length) m=people.filter(p=>(p.full_name||'').toLowerCase().includes(n)&&(!d||p.birth_date===d));
-  if(!m.length){ lkResult.innerHTML=`<p class="text-red-500 font-semibold">⚠️ No person record found${d?' with that name and date of birth':' with that name'}. Add them in the Dashboard first.</p>`; return; }
+  if(!m.length){ lkResult.innerHTML=`<p class="text-red-500 font-semibold">No person record found${d?' with that name and date of birth':' with that name'}. Add them in the Dashboard first.</p>`; return; }
   if(m.length===1){ pickPerson(m[0].id); return; }
-  lkResult.innerHTML='<p class="text-orange-600 font-semibold mb-1">⚠️ '+m.length+' matches. Tap the right person or enter their date of birth:</p>'+
+  lkResult.innerHTML='<p class="text-orange-600 font-semibold mb-1">'+m.length+' matches. Tap the right person or enter their date of birth:</p>'+
     m.map(p=>`<div onclick="pickPerson('${p.id}')" class="border rounded-lg p-2 mb-1 cursor-pointer hover:bg-green-50 bg-white">${personCard(p)}</div>`).join('');
 }
 async function markPaid(){
   const show=(t,c)=>{ payMsg.innerHTML=t; payMsg.className='text-sm mt-3 '+c; payMsg.classList.remove('hidden'); };
-  const a=allAppts.find(x=>x.id===paySel); if(!a) return show('⚠️ Select a customer first.','text-red-500');
-  const amt=parseFloat(pAmount.value); if(!(amt>0)) return show('⚠️ Enter the amount paid.','text-red-500');
-  if(pSendInfo.checked&&!lkPerson) return show('⚠️ No person record selected for the Basic Information file. Add them in the Dashboard, pick a match above, or untick the box.','text-red-500');
-  show('⏳ Saving & sending...','text-slate-500');
+  const a=allAppts.find(x=>x.id===paySel); if(!a) return show('Select a customer first.','text-red-500');
+  const amt=parseFloat(pAmount.value); if(!(amt>0)) return show('Enter the amount paid.','text-red-500');
+  if(pSendInfo.checked&&!lkPerson) return show('No person record selected for the Basic Information file. Add them in the Dashboard, pick a match above, or untick the box.','text-red-500');
+  show('Saving & sending...','text-slate-500');
   const paidAt=a.paid_at||new Date().toISOString();
   const { error } = await sb.from('appointments').update({ paid:true, amount:amt, payment_method:pMethod.value, paid_at:paidAt }).eq('id',a.id);
-  if(error) return show('⚠️ '+esc(error.message)+' (did you run schema-update.sql?)','text-red-500');
+  if(error) return show(''+esc(error.message)+' (did you run schema-update.sql?)','text-red-500');
   const ref='R-'+a.id.slice(0,8).toUpperCase(), when=new Date(paidAt).toLocaleString();
   const { jsPDF }=window.jspdf;
   const doc=new jsPDF(); doc.setFontSize(20); doc.text('OFFICIAL RECEIPT',20,25); doc.setFontSize(12);
@@ -422,9 +510,12 @@ async function markPaid(){
   }
   const err=await callFn({ type:'receipt', to:a.email, name:a.client_name, receiptNo:ref, amount:amt.toFixed(2), method:pMethod.value,
     paidAt:when, apptDate:a.appointment_date, pdfDataUrl:doc.output('datauristring'), infoPdfDataUrl:infoPdf });
-  show('✅ Marked as paid.'+(err?` <span class="text-orange-600">Email NOT sent: ${esc(err)}</span>`:` Receipt${infoPdf?' + info file':''} emailed to <b>${esc(a.email)}</b>.`), err?'text-slate-700':'text-green-600');
+  show('Marked as paid.'+(err?` <span class="text-orange-600">Email NOT sent: ${esc(err)}</span>`:` Receipt${infoPdf?' + info file':''} emailed to <b>${esc(a.email)}</b>.`), err?'text-slate-700':'text-green-600');
   await loadAppointments(); selectPay(a.id);
 }
+
+(function(){ const d=new Date(); loginDay.textContent=d.getDate();
+  loginMonth.textContent=d.toLocaleString('en',{month:'long',year:'numeric'}); loginWeek.textContent=d.toLocaleString('en',{weekday:'long'}); })();
 </script>
 </body>
 </html>
