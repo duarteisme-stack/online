@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Online Appointment System</title>
+<title>Deloko</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -73,6 +73,8 @@ body .cal-d.sel{background:var(--em);color:#fff;border-color:var(--brass)}
 body .cal-d.today{box-shadow:inset 0 0 0 1px var(--brass)}
 .cal-legend{display:flex;gap:.9rem;flex-wrap:wrap;font-size:.72rem;color:var(--mute);margin-top:.6rem}
 .cal-legend span::before{content:'';display:inline-block;width:.7rem;height:.7rem;border-radius:2px;margin-right:.3rem;vertical-align:-1px;background:var(--c)}
+body button.danger{background:transparent;border:1px solid #C9A0A0;color:#8A2B2B;border-radius:3px;font-weight:600;transition:.2s}
+body button.danger:hover:not(:disabled){background:#8A2B2B;border-color:#8A2B2B;color:#fff}
 :focus-visible{outline:2px solid var(--brass);outline-offset:2px}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -83,7 +85,7 @@ body .cal-d.today{box-shadow:inset 0 0 0 1px var(--brass)}
 <div id="loginView" class="min-h-screen">
   <div class="login-grid">
     <div class="login-art">
-      <div class="serif text-lg flex items-center"><span class="mark">A</span>Appointment System</div>
+      <div class="serif text-lg flex items-center"><span class="mark">D</span>Deloko</div>
       <div>
         <div id="loginDay" class="day">12</div>
         <div class="serif text-xl mt-2" id="loginMonth" style="color:#EFE9DA"></div>
@@ -111,13 +113,14 @@ body .cal-d.today{box-shadow:inset 0 0 0 1px var(--brass)}
 <div id="appView" class="hidden">
   <header class="bg-white shadow-sm">
     <div class="max-w-5xl mx-auto flex items-center justify-between px-4 py-3">
-      <h1 class="serif"><span class="mark">A</span>Appointment System</h1>
+      <h1 class="serif"><span class="mark">D</span>Deloko</h1>
       <button onclick="doLogout()" class="text-sm text-red-500 hover:underline">Sign out</button>
     </div>
     <div class="max-w-5xl mx-auto px-4 flex gap-2 pb-3">
       <button id="tabDash" onclick="showTab('dash')" class="tab-btn active px-4 py-2 rounded-lg text-sm font-semibold bg-slate-200">Dashboard</button>
       <button id="tabAppt" onclick="showTab('appt')" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold bg-slate-200">Appointment</button>
       <button id="tabPaid" onclick="showTab('paid')" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold bg-slate-200">Paid</button>
+      <button id="tabRes" onclick="showTab('res')" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold bg-slate-200">Reservations</button>
     </div>
   </header>
 
@@ -151,6 +154,7 @@ body .cal-d.today{box-shadow:inset 0 0 0 1px var(--brass)}
           <div class="flex flex-wrap gap-2 mt-4">
             <button id="addBtn" onclick="savePerson('add')" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">Add Person</button>
             <button id="updBtn" onclick="savePerson('update')" disabled class="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold px-4 py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed">Update Selected</button>
+            <button id="delBtn" onclick="deletePerson()" disabled class="danger text-sm px-4 py-2 disabled:opacity-40 disabled:cursor-not-allowed">Delete</button>
             <button onclick="clearPerson()" class="bg-slate-200 hover:bg-slate-300 text-sm font-semibold px-4 py-2 rounded-lg">New / Clear</button>
             <label class="bg-slate-200 hover:bg-slate-300 text-sm font-semibold px-4 py-2 rounded-lg cursor-pointer">
               Upload .txt <input id="txtFile" type="file" accept=".txt" class="hidden" onchange="loadTxt(this)">
@@ -208,6 +212,7 @@ body .cal-d.today{box-shadow:inset 0 0 0 1px var(--brass)}
           <div class="flex gap-2 mt-4">
             <button id="submitBtn" onclick="submitAppointment()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg">Submit Request</button>
             <button onclick="clearForm()" class="bg-slate-200 hover:bg-slate-300 font-semibold px-4 rounded-lg">New / Clear</button>
+            <button id="cancelApptBtn" onclick="deleteAppt()" class="danger hidden px-4 rounded-lg">Cancel Appt</button>
           </div>
           <p id="apptMsg" class="text-sm mt-3 hidden"></p>
           <div id="qrResult" class="hidden mt-4 text-center border rounded-xl p-4 bg-slate-50">
@@ -250,13 +255,54 @@ body .cal-d.today{box-shadow:inset 0 0 0 1px var(--brass)}
         </div>
       </div>
     </section>
+    <!-- ===== RESERVATIONS TAB ===== -->
+    <section id="resTab" class="hidden">
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-white rounded-2xl shadow p-5">
+          <h2 class="mb-3">New Reservation</h2>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-xs font-semibold">Check-in</label><input id="hIn" type="date" onchange="updateAvail()" class="w-full border px-3 py-2 mt-1"></div>
+            <div><label class="text-xs font-semibold">Check-out</label><input id="hOut" type="date" onchange="updateAvail()" class="w-full border px-3 py-2 mt-1"></div>
+          </div>
+          <label class="text-xs font-semibold block mt-3">Guests</label>
+          <input id="hGuests" type="number" min="1" value="1" onchange="updateAvail()" class="w-full border px-3 py-2 mt-1">
+          <p id="hAvail" class="text-xs mt-2" style="color:var(--mute)">Pick your dates to see available rooms.</p>
+          <label class="text-xs font-semibold block mt-3">Room</label>
+          <select id="hRoom" onchange="updateTotal()" class="w-full border px-3 py-2 mt-1"></select>
+          <p id="hTotal" class="serif mt-2" style="font-size:1.4rem;color:var(--em)"></p>
+          <label class="text-xs font-semibold block mt-3">Guest name</label><input id="hName" class="w-full border px-3 py-2 mt-1">
+          <label class="text-xs font-semibold block mt-3">Email (for the confirmation)</label><input id="hEmail" type="email" class="w-full border px-3 py-2 mt-1">
+          <label class="text-xs font-semibold block mt-3">Contact number</label><input id="hContact" class="w-full border px-3 py-2 mt-1">
+          <label class="text-xs font-semibold block mt-3">Notes</label><textarea id="hNotes" rows="2" class="w-full border px-3 py-2 mt-1"></textarea>
+          <div class="flex gap-2 mt-4">
+            <button onclick="reserve()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5">Reserve Room</button>
+            <button onclick="clearRes()" class="bg-slate-200 hover:bg-slate-300 font-semibold px-4">Clear</button>
+          </div>
+          <p id="hMsg" class="text-sm mt-3 hidden"></p>
+        </div>
+        <div class="bg-white rounded-2xl shadow p-5">
+          <h2 class="mb-3">Reservations</h2>
+          <div id="resList" class="space-y-2 text-sm max-h-[40rem] overflow-y-auto"></div>
+        </div>
+      </div>
+      <div class="bg-white rounded-2xl shadow p-5 mt-4">
+        <h2 class="mb-3">Rooms</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3">
+          <input id="mNo" class="border px-3 py-2" placeholder="Room no."><input id="mType" class="border px-3 py-2" placeholder="Type (Deluxe)">
+          <input id="mRate" type="number" min="0" class="border px-3 py-2" placeholder="Rate / night"><input id="mCap" type="number" min="1" class="border px-3 py-2" placeholder="Capacity">
+          <button onclick="addRoom()" class="bg-blue-600 hover:bg-blue-700 text-white py-2 col-span-2 sm:col-span-1">Add Room</button>
+        </div>
+        <p id="mMsg" class="text-sm mb-2 hidden"></p>
+        <div id="roomsList" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm"></div>
+      </div>
+    </section>
   </main>
 </div>
 
 <script>
 /* ================= CONFIG ================= */
 // ===== EDIT THESE: shown on every printed document =====
-const ORG_NAME='Appointment System';
+const ORG_NAME='Deloko';
 const ORG_TAGLINE='Your address, contact number and email here';
 const DOC_PURPOSE='This record confirms the personal details registered with us. It is issued for the appointment shown below and may be presented, together with a valid ID, at the front desk as proof of your registered information.';
 const SUPABASE_URL = "https://cxpkjzrrasbfijpimtpw.supabase.co";        // e.g. https://xyz.supabase.co
@@ -283,9 +329,9 @@ sb.auth.onAuthStateChange((e,s)=>{ if(e==='SIGNED_IN'&&s?.user&&!isAdmin) checkA
 
 /* ================= TABS ================= */
 function showTab(t){
-  [['dash',dashTab,tabDash],['appt',apptTab,tabAppt],['paid',paidTab,tabPaid]].forEach(([k,sec,btn])=>{
+  [['dash',dashTab,tabDash],['appt',apptTab,tabAppt],['paid',paidTab,tabPaid],['res',resTab,tabRes]].forEach(([k,sec,btn])=>{
     sec.classList.toggle('hidden',k!==t); btn.classList.toggle('active',k===t); });
-  if(t!=='dash') loadAppointments(); loadPeople();
+  if(t!=='dash') loadAppointments(); loadPeople(); if(t==='res') loadRes();
 }
 
 /* ================= DASHBOARD (people records) ================= */
@@ -306,7 +352,7 @@ function renderPeople(){
     <div class="min-w-0 text-sm"><div class="font-semibold text-slate-700">${esc(p.full_name)} <span class="text-xs font-normal text-slate-400">${refId(p.id)}</span></div>
     <div class="text-xs text-slate-500 truncate">DOB ${esc(p.birth_date)} · ${esc(p.email||'—')} · ${esc(p.contact||'—')}</div></div></div>`).join(''):'<p class="text-slate-400 text-sm">No records found.</p>';
 }
-function setMode(){ updBtn.disabled=!selId; addBtn.disabled=!!selId; }
+function setMode(){ updBtn.disabled=!selId; addBtn.disabled=!!selId; delBtn.disabled=!selId; }
 function selectPerson(id){
   const p=people.find(x=>x.id===id); if(!p) return; selId=id;
   FIELDS.forEach(([k,el])=>document.getElementById(el).value=p[k]||'');
@@ -339,6 +385,15 @@ async function savePerson(mode){
   }
   setInfoMsg(`${mode==='update'?'Updated':'Added'}: <b>${esc(v.full_name)}</b>${note}`,note?'text-orange-600':'text-green-600');
   await loadPeople(); clearPerson(true);
+}
+async function deletePerson(){
+  const p=people.find(x=>x.id===selId); if(!p) return;
+  if(!confirm(`Delete ${p.full_name} (${refId(p.id)}) permanently?\n\nTheir existing appointments are NOT deleted.`)) return;
+  const { data, error } = await sb.from('people').delete().eq('id',p.id).select();
+  if(error) return setInfoMsg(esc(error.message),'text-red-500');
+  if(!data||!data.length) return setInfoMsg('Could not delete. Run delete-policies.sql in Supabase first.','text-red-500');
+  if(p.photo_url){ try{ await sb.storage.from('photos').remove([decodeURIComponent(p.photo_url.split('/photos/')[1].split('?')[0])]); }catch(e){} }
+  setInfoMsg('Deleted: <b>'+esc(p.full_name)+'</b>','text-green-600'); await loadPeople(); clearPerson(true);
 }
 function previewPhoto(inp){
   const f=inp.files[0]; if(!f) return;
@@ -423,14 +478,24 @@ function selectAppt(id){
   onBehalf.checked=!!a.on_behalf; toggleRequester();
   rName.value=a.requester_name||''; rEmail.value=a.requester_email||''; rRelation.value=a.requester_relation||'';
   aReason.value=a.reason||''; aDate.value=a.appointment_date; calY=+a.appointment_date.slice(0,4); calM=+a.appointment_date.slice(5,7)-1; lookupAppt();
-  submitBtn.textContent='Update & Resend QR'; qrResult.classList.add('hidden'); apptMsg.classList.add('hidden');
+  submitBtn.textContent='Update & Resend QR'; cancelApptBtn.classList.remove('hidden'); qrResult.classList.add('hidden'); apptMsg.classList.add('hidden');
   renderApptList(); showAvail(); window.scrollTo({top:0,behavior:'smooth'});
 }
 function clearForm(keepMsg){
   ['aName','aContact','aEmail','rName','rEmail','rRelation','aReason','aDate'].forEach(id=>document.getElementById(id).value='');
-  editId=null; apptPerson=null; aLookup.innerHTML=''; calY=null; onBehalf.checked=false; toggleRequester(); submitBtn.textContent='Submit Request';
+  editId=null; apptPerson=null; aLookup.innerHTML=''; calY=null; onBehalf.checked=false; toggleRequester(); submitBtn.textContent='Submit Request'; cancelApptBtn.classList.add('hidden');
   if(keepMsg!==true){ qrResult.classList.add('hidden'); apptMsg.classList.add('hidden'); }
   renderApptList(); showAvail();
+}
+async function deleteAppt(){
+  const a=allAppts.find(x=>x.id===editId); if(!a) return;
+  if(!confirm(`Cancel and delete the appointment of ${a.client_name} on ${a.appointment_date}?`+(a.paid?'\n\nThis one is marked PAID. Its payment record will be deleted too.':'')+'\n\nThe date becomes available again.')) return;
+  const { data, error } = await sb.from('appointments').delete().eq('id',a.id).select();
+  const say=(t,c)=>{ apptMsg.innerHTML=t; apptMsg.className='text-sm mt-3 '+c; apptMsg.classList.remove('hidden'); };
+  if(error) return say(esc(error.message),'text-red-500');
+  if(!data||!data.length) return say('Could not delete. Run delete-policies.sql in Supabase first.','text-red-500');
+  await loadAppointments(); clearForm(true); paySel=null; renderPaidList();
+  say('Appointment cancelled: <b>'+esc(a.client_name)+'</b>, '+esc(a.appointment_date)+' is open again.','text-green-600');
 }
 async function callFn(body){
   try{ const r=await fetch(`${SUPABASE_URL}/functions/v1/send-qr-email`,{method:'POST',
@@ -590,6 +655,82 @@ async function markPaid(){
 
 (function(){ const d=new Date(); loginDay.textContent=d.getDate();
   loginMonth.textContent=d.toLocaleString('en',{month:'long',year:'numeric'}); loginWeek.textContent=d.toLocaleString('en',{weekday:'long'}); })();
+
+/* ================= HOTEL RESERVATIONS ================= */
+let rooms=[], resv=[];
+const peso=n=>'PHP '+Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2});
+const nightsOf=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
+const holds=x=>x.status!=='cancelled'&&x.status!=='checked_out';
+function hSay(el,t,c){ el.innerHTML=t; el.className='text-sm mt-3 '+c; el.classList.remove('hidden'); }
+async function loadRes(){
+  const [a,b]=await Promise.all([sb.from('rooms').select('*').order('room_no'),sb.from('reservations').select('*').order('check_in',{ascending:false})]);
+  if(a.error||b.error) hSay(hMsg,esc((a.error||b.error).message)+' (did you run hotel-tables.sql?)','text-red-500');
+  rooms=a.data||[]; resv=b.data||[]; renderRooms(); renderRes(); updateAvail();
+}
+function freeRooms(inn,out,guests){
+  return rooms.filter(r=>r.active!==false&&r.capacity>=guests&&!resv.some(x=>x.room_id===r.id&&holds(x)&&x.check_in<out&&x.check_out>inn));
+}
+function updateAvail(){
+  const inn=hIn.value, out=hOut.value, g=+hGuests.value||1, today=localDate(new Date());
+  hIn.min=today; if(inn){ const d=new Date(inn); d.setDate(d.getDate()+1); hOut.min=localDate(d); }
+  if(!inn||!out||out<=inn){ hRoom.innerHTML=''; hAvail.textContent=(inn&&out)?'Check-out must be after check-in.':'Pick your dates to see available rooms.'; hTotal.textContent=''; return; }
+  const f=freeRooms(inn,out,g), keep=hRoom.value;
+  hRoom.innerHTML=f.map(r=>`<option value="${r.id}">Room ${esc(r.room_no)}, ${esc(r.room_type||'Standard')}, ${peso(r.rate)}/night</option>`).join('');
+  if(f.some(r=>r.id===keep)) hRoom.value=keep;
+  hAvail.innerHTML=`${nightsOf(inn,out)} night(s). `+(f.length?`<b style="color:var(--em)">${f.length} room(s) available.</b>`:'<b class="text-red-500">No room is free for these dates.</b>'); updateTotal();
+}
+function updateTotal(){
+  const r=rooms.find(x=>x.id===hRoom.value); hTotal.textContent=r?'Total '+peso(r.rate*nightsOf(hIn.value,hOut.value)):'';
+}
+function clearRes(){ ['hIn','hOut','hName','hEmail','hContact','hNotes'].forEach(i=>document.getElementById(i).value=''); hGuests.value=1; hMsg.classList.add('hidden'); updateAvail(); }
+async function reserve(){
+  const r=rooms.find(x=>x.id===hRoom.value);
+  if(!hName.value.trim()) return hSay(hMsg,'Enter the guest name.','text-red-500');
+  if(!r||!hIn.value||!hOut.value||hOut.value<=hIn.value) return hSay(hMsg,'Choose valid dates and an available room.','text-red-500');
+  const n=nightsOf(hIn.value,hOut.value), total=r.rate*n;
+  hSay(hMsg,'Saving...','text-slate-500');
+  const row={ room_id:r.id, guest_name:hName.value.trim(), guest_email:hEmail.value.trim()||null, guest_contact:hContact.value.trim()||null,
+    guests:+hGuests.value||1, check_in:hIn.value, check_out:hOut.value, total, notes:hNotes.value.trim()||null };
+  const { error } = await sb.from('reservations').insert(row);
+  if(error) return hSay(hMsg,esc(error.code==='23P01'?'That room was just booked for these dates. Pick another.':error.message),'text-red-500');
+  let err=''; if(row.guest_email) err=await callFn({ type:'reservation', org:ORG_NAME, to:row.guest_email, name:row.guest_name, room:r.room_no, roomType:r.room_type||'Standard', checkIn:row.check_in, checkOut:row.check_out, nights:n, total:total.toFixed(2) });
+  await loadRes(); clearRes();
+  hSay(hMsg,`Reserved Room ${esc(r.room_no)} for <b>${esc(row.guest_name)}</b>, ${n} night(s), ${peso(total)}.`+(row.guest_email?(err?` <span class="text-orange-600">Email NOT sent: ${esc(err)}</span>`:' Confirmation emailed.'):''), 'text-green-600');
+}
+function renderRes(){
+  const label={booked:'Booked',checked_in:'Checked in',checked_out:'Checked out',cancelled:'Cancelled'};
+  resList.innerHTML=resv.length?resv.map(x=>{ const r=rooms.find(q=>q.id===x.room_id)||{};
+    const btn=(t,st,cls)=>`<button onclick="setRes('${x.id}','${st}')" class="${cls||'bg-slate-200 hover:bg-slate-300'} text-xs px-3 py-1.5 font-semibold">${t}</button>`;
+    return `<div class="border rounded-lg p-3 bg-slate-50"><div class="font-semibold">Room ${esc(r.room_no)} <span class="text-xs font-normal text-slate-400">${esc(label[x.status]||x.status)}${x.paid?', paid':''}</span></div>
+      <div>${esc(x.guest_name)} <span class="text-slate-500">${esc(x.guest_contact||'')}</span></div>
+      <div class="text-xs text-slate-500">${esc(x.check_in)} to ${esc(x.check_out)}, ${nightsOf(x.check_in,x.check_out)} night(s), ${peso(x.total)}</div>
+      <div class="flex flex-wrap gap-2 mt-2">${x.status==='booked'?btn('Check in','checked_in'):''}${x.status==='checked_in'?btn('Check out','checked_out'):''}
+        ${holds(x)?`<button onclick="payRes('${x.id}',${!x.paid})" class="bg-slate-200 hover:bg-slate-300 text-xs px-3 py-1.5 font-semibold">${x.paid?'Mark unpaid':'Mark paid'}</button>`:''}${x.status==='booked'?btn('Cancel','cancelled','danger'):''}</div></div>`; }).join(''):'<p class="text-slate-400">No reservations yet.</p>';
+}
+async function setRes(id,st){
+  if(st==='cancelled'&&!confirm('Cancel this reservation? The room opens up again.')) return;
+  const { error } = await sb.from('reservations').update({status:st}).eq('id',id);
+  if(error) return hSay(hMsg,esc(error.message),'text-red-500'); await loadRes();
+}
+async function payRes(id,v){ const { error }=await sb.from('reservations').update({paid:v}).eq('id',id); if(error) return hSay(hMsg,esc(error.message),'text-red-500'); await loadRes(); }
+function renderRooms(){
+  const t=localDate(new Date());
+  roomsList.innerHTML=rooms.length?rooms.map(r=>{ const occ=resv.some(x=>x.room_id===r.id&&holds(x)&&x.check_in<=t&&x.check_out>t);
+    return `<div class="border rounded-lg p-3 bg-slate-50 flex items-center justify-between gap-2"><div><div class="font-semibold">Room ${esc(r.room_no)} <span class="text-xs font-normal ${occ?'text-red-500':'text-green-700'}">${occ?'Occupied today':'Free today'}</span></div>
+      <div class="text-xs text-slate-500">${esc(r.room_type||'Standard')}, ${peso(r.rate)}/night, sleeps ${r.capacity}</div></div>
+      <button onclick="delRoom('${r.id}')" class="danger text-xs px-3 py-1.5">Remove</button></div>`; }).join(''):'<p class="text-slate-400">No rooms yet. Add your first room above.</p>';
+}
+async function addRoom(){
+  if(!mNo.value.trim()||!(+mRate.value>=0)||mRate.value==='') return hSay(mMsg,'Enter a room number and a rate.','text-red-500');
+  const { error }=await sb.from('rooms').insert({ room_no:mNo.value.trim(), room_type:mType.value.trim()||null, rate:+mRate.value, capacity:+mCap.value||2 });
+  if(error) return hSay(mMsg,esc(error.code==='23505'?'That room number already exists.':error.message),'text-red-500');
+  ['mNo','mType','mRate','mCap'].forEach(i=>document.getElementById(i).value=''); mMsg.classList.add('hidden'); await loadRes();
+}
+async function delRoom(id){
+  if(!confirm('Remove this room?')) return;
+  const { error }=await sb.from('rooms').delete().eq('id',id);
+  if(error) return hSay(mMsg,'This room has reservations, so it cannot be removed.','text-red-500'); await loadRes();
+}
 </script>
 </body>
 </html>
