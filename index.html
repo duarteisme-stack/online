@@ -7,7 +7,6 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,500;0,6..96,700;1,6..96,500&family=Hanken+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -121,7 +120,6 @@ body button.danger:hover:not(:disabled){background:#8A2B2B;border-color:#8A2B2B;
       <button id="tabDash" onclick="showTab('dash')" class="tab-btn active px-4 py-2 rounded-lg text-sm font-semibold bg-slate-200">Dashboard</button>
       <button id="tabAppt" onclick="showTab('appt')" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold bg-slate-200">Appointment</button>
       <button id="tabPaid" onclick="showTab('paid')" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold bg-slate-200">Paid</button>
-      <button id="tabRes" onclick="showTab('res')" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold bg-slate-200">Reservations</button>
     </div>
   </header>
 
@@ -202,7 +200,11 @@ body button.danger:hover:not(:disabled){background:#8A2B2B;border-color:#8A2B2B;
               <input id="rRelation" class="w-full border rounded-lg px-3 py-2 mt-1 bg-white" placeholder="e.g. Mother, Son, Friend"></div>
           </div>
 
-          <label class="text-xs font-semibold text-slate-500 block mt-3">Appointment Date</label>
+          <label class="text-xs font-semibold text-slate-500 block mt-3">Booking type</label>
+          <select id="aType" onchange="typeChanged()" class="w-full border rounded-lg px-3 py-2 mt-1"><option value="">Standard appointment</option><option value="member">Premium membership</option></select>
+          <div id="planBox" class="hidden mt-2"><select id="aPlan" onchange="planChanged()" class="w-full border rounded-lg px-3 py-2"></select>
+            <p id="planInfo" class="text-xs mt-1" style="color:var(--mute)"></p></div>
+          <label class="text-xs font-semibold text-slate-500 block mt-3">Start / Appointment Date</label>
           <input id="aDate" type="date" onchange="checkDate()" class="w-full border rounded-lg px-3 py-2 mt-1">
           <p id="availInfo" class="text-xs text-slate-500 mt-1"></p>
           <div id="cal" class="cal"></div>
@@ -228,6 +230,16 @@ body button.danger:hover:not(:disabled){background:#8A2B2B;border-color:#8A2B2B;
           <div id="apptList" class="space-y-2 text-sm max-h-96 overflow-y-auto"></div>
         </div>
       </div>
+      <div class="bg-white rounded-2xl shadow p-5 mt-4">
+        <h2 class="mb-3">Membership Plans</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3">
+          <input id="plName" class="border px-3 py-2" placeholder="Plan (Gold)"><input id="plPrice" type="number" min="0" class="border px-3 py-2" placeholder="Price">
+          <input id="plMonths" type="number" min="1" class="border px-3 py-2" placeholder="Months (12)"><input id="plPerks" class="border px-3 py-2" placeholder="Perks">
+          <button onclick="addPlan()" class="bg-blue-600 hover:bg-blue-700 text-white py-2 col-span-2 sm:col-span-1">Add Plan</button>
+        </div>
+        <p id="plMsg" class="text-sm mb-2 hidden"></p>
+        <div id="plansList" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm"></div>
+      </div>
     </section>
     <!-- ===== PAID TAB ===== -->
     <section id="paidTab" class="hidden">
@@ -239,14 +251,6 @@ body button.danger:hover:not(:disabled){background:#8A2B2B;border-color:#8A2B2B;
           <input id="pAmount" type="number" min="0" step="0.01" class="w-full border rounded-lg px-3 py-2 mt-1 mb-3" placeholder="0.00">
           <label class="text-xs font-semibold text-slate-500">Payment Method</label>
           <select id="pMethod" class="w-full border rounded-lg px-3 py-2 mt-1 mb-3"><option>Cash</option><option>GCash</option><option>Card</option><option>Bank Transfer</option></select>
-          <div class="border rounded-xl p-3 bg-slate-50 mb-3">
-            <p class="text-xs font-bold text-slate-500 uppercase mb-2">Record lookup (Basic Information file)</p>
-            <input id="lkName" oninput="lookupPerson()" class="w-full border rounded-lg px-3 py-2 mb-2 bg-white" placeholder="Type the person's full name">
-            <input id="lkDob" type="date" onchange="lookupPerson()" class="w-full border rounded-lg px-3 py-2 bg-white">
-            <p class="text-xs text-slate-400 mt-1">Date of birth is optional. Use it when several people share a name.</p>
-            <div id="lkResult" class="mt-2 text-sm"></div>
-          </div>
-          <label class="flex items-center gap-2 mb-3 text-sm"><input id="pSendInfo" type="checkbox" checked class="w-4 h-4 accent-green-600"> Also email the Basic Information file (with photo)</label>
           <button onclick="markPaid()" class="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2.5 rounded-lg">Mark Paid &amp; Email Receipt</button>
           <p id="payMsg" class="text-sm mt-3 hidden"></p>
         </div>
@@ -254,47 +258,6 @@ body button.danger:hover:not(:disabled){background:#8A2B2B;border-color:#8A2B2B;
           <h2 class="font-bold text-slate-700 mb-3">Customers</h2>
           <div id="paidList" class="space-y-2 text-sm max-h-96 overflow-y-auto"></div>
         </div>
-      </div>
-    </section>
-    <!-- ===== RESERVATIONS TAB ===== -->
-    <section id="resTab" class="hidden">
-      <div class="grid md:grid-cols-2 gap-4">
-        <div class="bg-white rounded-2xl shadow p-5">
-          <h2 class="mb-3">New Reservation</h2>
-          <div class="grid grid-cols-2 gap-3">
-            <div><label class="text-xs font-semibold">Check-in</label><input id="hIn" type="date" onchange="updateAvail()" class="w-full border px-3 py-2 mt-1"></div>
-            <div><label class="text-xs font-semibold">Check-out</label><input id="hOut" type="date" onchange="updateAvail()" class="w-full border px-3 py-2 mt-1"></div>
-          </div>
-          <label class="text-xs font-semibold block mt-3">Guests</label>
-          <input id="hGuests" type="number" min="1" value="1" onchange="updateAvail()" class="w-full border px-3 py-2 mt-1">
-          <p id="hAvail" class="text-xs mt-2" style="color:var(--mute)">Pick your dates to see available rooms.</p>
-          <label class="text-xs font-semibold block mt-3">Room</label>
-          <select id="hRoom" onchange="updateTotal()" class="w-full border px-3 py-2 mt-1"></select>
-          <p id="hTotal" class="serif mt-2" style="font-size:1.4rem;color:var(--em)"></p>
-          <label class="text-xs font-semibold block mt-3">Guest name</label><input id="hName" class="w-full border px-3 py-2 mt-1">
-          <label class="text-xs font-semibold block mt-3">Email (for the confirmation)</label><input id="hEmail" type="email" class="w-full border px-3 py-2 mt-1">
-          <label class="text-xs font-semibold block mt-3">Contact number</label><input id="hContact" class="w-full border px-3 py-2 mt-1">
-          <label class="text-xs font-semibold block mt-3">Notes</label><textarea id="hNotes" rows="2" class="w-full border px-3 py-2 mt-1"></textarea>
-          <div class="flex gap-2 mt-4">
-            <button onclick="reserve()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2.5">Reserve Room</button>
-            <button onclick="clearRes()" class="bg-slate-200 hover:bg-slate-300 font-semibold px-4">Clear</button>
-          </div>
-          <p id="hMsg" class="text-sm mt-3 hidden"></p>
-        </div>
-        <div class="bg-white rounded-2xl shadow p-5">
-          <h2 class="mb-3">Reservations</h2>
-          <div id="resList" class="space-y-2 text-sm max-h-[40rem] overflow-y-auto"></div>
-        </div>
-      </div>
-      <div class="bg-white rounded-2xl shadow p-5 mt-4">
-        <h2 class="mb-3">Rooms</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3">
-          <input id="mNo" class="border px-3 py-2" placeholder="Room no."><input id="mType" class="border px-3 py-2" placeholder="Type (Deluxe)">
-          <input id="mRate" type="number" min="0" class="border px-3 py-2" placeholder="Rate / night"><input id="mCap" type="number" min="1" class="border px-3 py-2" placeholder="Capacity">
-          <button onclick="addRoom()" class="bg-blue-600 hover:bg-blue-700 text-white py-2 col-span-2 sm:col-span-1">Add Room</button>
-        </div>
-        <p id="mMsg" class="text-sm mb-2 hidden"></p>
-        <div id="roomsList" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 text-sm"></div>
       </div>
     </section>
   </main>
@@ -323,16 +286,16 @@ async function checkAdmin(user){
   if(!data || !data.is_admin){ await sb.auth.signOut(); loginErr.textContent="Not an admin account."; loginErr.classList.remove('hidden'); return; }
   isAdmin = true;
   loginView.classList.add('hidden'); appView.classList.remove('hidden');
-  await loadPeople(); await loadAppointments();
+  await loadPeople(); await loadAppointments(); await loadPlans();
 }
 async function doLogout(){ await sb.auth.signOut(); location.reload(); }
 sb.auth.onAuthStateChange((e,s)=>{ if(e==='SIGNED_IN'&&s?.user&&!isAdmin) checkAdmin(s.user); });
 
 /* ================= TABS ================= */
 function showTab(t){
-  [['dash',dashTab,tabDash],['appt',apptTab,tabAppt],['paid',paidTab,tabPaid],['res',resTab,tabRes]].forEach(([k,sec,btn])=>{
+  [['dash',dashTab,tabDash],['appt',apptTab,tabAppt],['paid',paidTab,tabPaid]].forEach(([k,sec,btn])=>{
     sec.classList.toggle('hidden',k!==t); btn.classList.toggle('active',k===t); });
-  if(t!=='dash') loadAppointments(); loadPeople(); if(t==='res') loadRes();
+  if(t!=='dash') loadAppointments(); loadPeople();
 }
 
 /* ================= DASHBOARD (people records) ================= */
@@ -429,7 +392,7 @@ function localDate(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStar
 function booked(ex){ return allAppts.filter(a=>a.id!==ex).map(a=>a.appointment_date); }
 function nextFree(){ const b=new Set(booked(editId)); const d=new Date();
   for(let i=0;i<365;i++){ const s=localDate(d); if(!b.has(s)) return s; d.setDate(d.getDate()+1); } return ''; }
-function checkDate(){ dateWarn.classList.toggle('hidden', !booked(editId).includes(aDate.value)); renderCal(); }
+function checkDate(){ planChanged(); dateWarn.classList.toggle('hidden', !booked(editId).includes(aDate.value)); renderCal(); }
 function lookupAppt(){
   const n=aName.value.trim().toLowerCase(); apptPerson=null;
   if(n.length<2){ aLookup.innerHTML=''; return; }
@@ -472,7 +435,7 @@ async function loadAppointments(){
 function renderApptList(){
   apptList.innerHTML = allAppts.length ? allAppts.map(a=>`
     <div onclick="tap('a','${a.id}')" class="dbl border rounded-lg p-3 cursor-pointer hover:bg-blue-50 ${a.id===editId?'bg-blue-50 border-blue-400':'bg-slate-50'}">
-      <div class="font-semibold text-slate-700">${esc(a.client_name)} <span class="text-xs font-normal text-slate-400">→ ${esc(a.appointment_date)}</span> <span class="text-xs text-slate-400">#${a.id.slice(0,6).toUpperCase()}</span></div>
+      <div class="font-semibold text-slate-700">${esc(a.client_name)} <span class="text-xs font-normal text-slate-400">→ ${esc(a.appointment_date)}</span> <span class="text-xs text-slate-400">#${a.id.slice(0,6).toUpperCase()}</span>${a.plan_name?` <span class="text-xs px-2 py-0.5 rounded-full" style="background:#F4EFE2;color:#7A5B2A">${esc(a.plan_name)} until ${esc(a.member_end)}</span>`:''}</div>
       <div class="text-slate-500">${esc(a.email)} · ${esc(a.contact)}</div>
       ${a.on_behalf?`<div class="text-blue-600 text-xs mt-1">Sent by ${esc(a.requester_name)} (${esc(a.requester_relation)}) · ${esc(a.requester_email)}</div>`:''}
       ${a.reason?`<div class="text-slate-500 italic mt-1">“${esc(a.reason)}”</div>`:''}
@@ -483,13 +446,13 @@ function selectAppt(id){
   editId=id; aName.value=a.client_name||''; aContact.value=a.contact||''; aEmail.value=a.email||'';
   onBehalf.checked=!!a.on_behalf; toggleRequester();
   rName.value=a.requester_name||''; rEmail.value=a.requester_email||''; rRelation.value=a.requester_relation||'';
-  aReason.value=a.reason||''; aDate.value=a.appointment_date; calY=+a.appointment_date.slice(0,4); calM=+a.appointment_date.slice(5,7)-1; lookupAppt();
+  aReason.value=a.reason||''; aDate.value=a.appointment_date; calY=+a.appointment_date.slice(0,4); calM=+a.appointment_date.slice(5,7)-1; lookupAppt(); aType.value=a.plan_id?'member':''; typeChanged(); if(a.plan_id) aPlan.value=a.plan_id; planChanged();
   submitBtn.textContent='Update & Resend QR'; cancelApptBtn.classList.remove('hidden'); qrResult.classList.add('hidden'); apptMsg.classList.add('hidden');
   renderApptList(); showAvail(); setTimeout(()=>window.scrollTo({top:0,behavior:'smooth'}),600);
 }
 function clearForm(keepMsg){
   ['aName','aContact','aEmail','rName','rEmail','rRelation','aReason','aDate'].forEach(id=>document.getElementById(id).value='');
-  editId=null; apptPerson=null; aLookup.innerHTML=''; calY=null; onBehalf.checked=false; toggleRequester(); submitBtn.textContent='Submit Request'; cancelApptBtn.classList.add('hidden');
+  editId=null; aType.value=''; typeChanged(); apptPerson=null; aLookup.innerHTML=''; calY=null; onBehalf.checked=false; toggleRequester(); submitBtn.textContent='Submit Request'; cancelApptBtn.classList.add('hidden');
   if(keepMsg!==true){ qrResult.classList.add('hidden'); apptMsg.classList.add('hidden'); }
   renderApptList(); showAvail();
 }
@@ -524,21 +487,25 @@ async function submitAppointment(){
     requester_name:onBehalf.checked?rName.value.trim():null, requester_email:onBehalf.checked?rEmail.value.trim():null,
     requester_relation:onBehalf.checked?rRelation.value.trim():null, reason:aReason.value.trim(), appointment_date:date };
   if(!editId) payload.status='confirmed';
+  const pl=aType.value==='member'?plans.find(x=>x.id===aPlan.value):null;
+  if(aType.value==='member'&&!pl) return show('Choose a membership plan.','text-red-500');
+  Object.assign(payload,{ plan_id:pl?pl.id:null, plan_name:pl?pl.name:null, plan_price:pl?pl.price:null, member_start:pl?date:null, member_end:pl?addMonths(date,pl.months):null });
   const q = editId ? sb.from('appointments').update(payload).eq('id',editId) : sb.from('appointments').insert(payload);
   const { data, error } = await q.select().single();
   if(error) return show(''+esc(error.message),'text-red-500');
 
-  const details={ name:data.client_name, email:data.email, date:data.appointment_date, reason:(data.reason||'').slice(0,200) };
+  const details={ name:data.client_name, email:data.email, date:data.appointment_date, reason:(data.reason||'').slice(0,200), plan:data.plan_name||undefined, until:data.member_end||undefined };
   const base=location.origin+location.pathname.replace(/[^/]*$/,'');
   const qrText=`${base}view.html?d=${encodeURIComponent(btoa(encodeURIComponent(JSON.stringify(details))))}`;
   const qrEl=document.createElement('div'); new QRCode(qrEl,{text:qrText,width:300,height:300,correctLevel:QRCode.CorrectLevel.M});
   await new Promise(r=>setTimeout(r,300));
   const cv=qrEl.querySelector('canvas'); const qrDataUrl=cv?cv.toDataURL('image/png'):qrEl.querySelector('img').src;
-  qrImg.src=qrDataUrl; qrDownload.href=qrDataUrl; qrResult.classList.remove('hidden');
+  const hold=!!data.plan_name&&!data.paid; // unpaid membership: no QR yet
+  if(!hold){ qrImg.src=qrDataUrl; qrDownload.href=qrDataUrl; qrResult.classList.remove('hidden'); }
 
-  const err=await callFn({ to:data.email, name:data.client_name, date:data.appointment_date, qrDataUrl, qrText });
-  show(`Appointment ${editId?'updated':'confirmed'} for <b>${esc(data.appointment_date)}</b>.`+
-    (err?` <span class="text-orange-600">Email NOT sent: ${esc(err)}</span>`:` QR emailed to <b>${esc(data.email)}</b>.`), err?'text-slate-700':'text-green-600');
+  const err=await callFn(hold?{ type:'pending', org:ORG_NAME, to:data.email, name:data.client_name, plan:data.plan_name, start:data.member_start, until:data.member_end, price:Number(data.plan_price||0).toFixed(2) }:{ to:data.email, name:data.client_name, date:data.appointment_date, qrDataUrl, qrText, plan:data.plan_name, until:data.member_end });
+  show(`${data.plan_name?esc(data.plan_name)+' membership':'Appointment'} ${editId?'updated':'confirmed'} for <b>${esc(data.appointment_date)}</b>.`+
+    (err?` <span class="text-orange-600">Email NOT sent: ${esc(err)}</span>`:` ${hold?'Waiting for payment. The QR pass is emailed after payment. Notice sent to':'QR emailed to'} <b>${esc(data.email)}</b>.`), err?'text-slate-700':'text-green-600');
   await loadAppointments(); clearForm(true);
 }
 
@@ -554,57 +521,15 @@ function renderPaidList(){
 function selectPay(id){
   const a=allAppts.find(x=>x.id===id); if(!a) return; paySel=id;
   payWho.innerHTML=`Customer: <b>${esc(a.client_name)}</b> (${esc(a.email)})`+(a.paid?' — already paid, you can resend the receipt':'');
-  lkName.value=a.client_name||''; lkDob.value=''; lookupPerson(); pAmount.value=a.amount||''; pMethod.value=a.payment_method||'Cash'; payMsg.classList.add('hidden'); renderPaidList();
+  pAmount.value=a.amount||a.plan_price||''; pMethod.value=a.payment_method||'Cash'; payMsg.classList.add('hidden'); renderPaidList();
 }
-const toDataUrl=blob=>new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(blob); });
 function personCard(p){
   return `<div class="flex items-center gap-3">${p.photo_url?`<img src="${esc(p.photo_url)}" class="w-14 h-14 rounded object-cover border">`:'<div class="w-14 h-14 rounded bg-slate-200"></div>'}
     <div class="text-xs"><div class="font-semibold text-slate-700 text-sm">${esc(p.full_name)} <span class="text-slate-400 font-normal">${refId(p.id)}</span></div>
     DOB ${esc(p.birth_date)}<br>${esc(p.email||'—')} · ${esc(p.contact||'—')}<br>${esc(p.address||'No address')}</div></div>`;
 }
-function pickPerson(id){ lkPerson=people.find(x=>x.id===id)||null; lkResult.innerHTML='<p class="text-green-600 font-semibold mb-1">Record found</p>'+(lkPerson?personCard(lkPerson):''); }
-function lookupPerson(){
-  const n=lkName.value.trim().toLowerCase(), d=lkDob.value; lkPerson=null;
-  if(!n){ lkResult.innerHTML=''; return; }
-  let m=people.filter(p=>(p.full_name||'').trim().toLowerCase()===n&&(!d||p.birth_date===d));
-  if(!m.length) m=people.filter(p=>(p.full_name||'').toLowerCase().includes(n)&&(!d||p.birth_date===d));
-  if(!m.length){ lkResult.innerHTML=`<p class="text-red-500 font-semibold">No person record found${d?' with that name and date of birth':' with that name'}. Add them in the Dashboard first.</p>`; return; }
-  if(m.length===1){ pickPerson(m[0].id); return; }
-  lkResult.innerHTML='<p class="text-orange-600 font-semibold mb-1">'+m.length+' matches. Tap the right person or enter their date of birth:</p>'+
-    m.map(p=>`<div onclick="pickPerson('${p.id}')" class="border rounded-lg p-2 mb-1 cursor-pointer hover:bg-green-50 bg-white">${personCard(p)}</div>`).join('');
-}
-function squarePhoto(src){ // center-crop to a square so the photo is never stretched
-  return new Promise(res=>{
-    const im=new Image();
-    im.onload=()=>{ const side=Math.min(im.width,im.height), sx=(im.width-side)/2, sy=(im.height-side)*0.2;
-      const c=document.createElement('canvas'); c.width=c.height=600; const g=c.getContext('2d');
-      g.fillStyle='#fff'; g.fillRect(0,0,600,600); g.drawImage(im,sx,sy,side,side,0,0,600,600); res(c.toDataURL('image/jpeg',.92)); };
-    im.onerror=()=>res(src); im.src=src;
-  });
-}
-function pdfBase(d,title,ref,issued){
-  d.setFillColor(14,59,49); d.rect(0,0,210,34,'F'); d.setFillColor(176,141,87); d.rect(0,34,210,1.2,'F');
-  d.setTextColor(242,236,221); d.setFont('times','bold'); d.setFontSize(20); d.text(ORG_NAME,18,16);
-  d.setFont('helvetica','normal'); d.setFontSize(9); d.setTextColor(169,189,180); d.text(ORG_TAGLINE,18,23);
-  d.setTextColor(210,177,122); d.text('Ref '+ref,192,16,{align:'right'}); d.text(issued,192,23,{align:'right'});
-  d.setTextColor(14,59,49); d.setFont('times','bold'); d.setFontSize(24); d.text(title,18,54);
-}
-function pdfRows(d,rows,x,y,w){
-  rows.forEach(([k,v])=>{
-    const lines=d.splitTextToSize(String(v||'-'),w-42);
-    d.setFont('helvetica','normal'); d.setFontSize(9); d.setTextColor(92,107,100); d.text(k,x,y);
-    d.setFont('helvetica','bold'); d.setFontSize(10.5); d.setTextColor(20,32,28); d.text(lines,x+42,y);
-    y+=lines.length*5.2+3.5; d.setDrawColor(213,220,215); d.setLineWidth(.2); d.line(x,y-3.6,x+w,y-3.6); y+=3;
-  });
-  return y;
-}
-function pdfFooter(d,ref){
-  d.setDrawColor(176,141,87); d.setLineWidth(.4); d.line(18,278,192,278);
-  d.setFont('helvetica','normal'); d.setFontSize(8); d.setTextColor(92,107,100);
-  d.text('Generated electronically by '+ORG_NAME+'. Reference '+ref+'.',18,284);
-}
 async function qrFor(a){
-  const details={ name:a.client_name, email:a.email, date:a.appointment_date, reason:(a.reason||'').slice(0,200) };
+  const details={ name:a.client_name, email:a.email, date:a.appointment_date, reason:(a.reason||'').slice(0,200), plan:a.plan_name||undefined, until:a.member_end||undefined };
   const base=location.origin+location.pathname.replace(/[^/]*$/,'');
   const el=document.createElement('div');
   new QRCode(el,{ text:`${base}view.html?d=${encodeURIComponent(btoa(encodeURIComponent(JSON.stringify(details))))}`, width:200, height:200, correctLevel:QRCode.CorrectLevel.M });
@@ -615,127 +540,49 @@ async function markPaid(){
   const show=(t,c)=>{ payMsg.innerHTML=t; payMsg.className='text-sm mt-3 '+c; payMsg.classList.remove('hidden'); };
   const a=allAppts.find(x=>x.id===paySel); if(!a) return show('Select a customer first.','text-red-500');
   const amt=parseFloat(pAmount.value); if(!(amt>0)) return show('Enter the amount paid.','text-red-500');
-  if(pSendInfo.checked&&!lkPerson) return show('No person record selected for the Basic Information file. Add them in the Dashboard, pick a match above, or untick the box.','text-red-500');
-  show('Saving & sending...','text-slate-500');
+  show('Saving and sending...','text-slate-500');
   const paidAt=a.paid_at||new Date().toISOString();
   const { error } = await sb.from('appointments').update({ paid:true, amount:amt, payment_method:pMethod.value, paid_at:paidAt }).eq('id',a.id);
-  if(error) return show(''+esc(error.message)+' (did you run schema-update.sql?)','text-red-500');
-  const ref='R-'+a.id.slice(0,8).toUpperCase(), when=new Date(paidAt).toLocaleString();
-  const { jsPDF }=window.jspdf;
-  const issued=new Date().toLocaleDateString('en',{year:'numeric',month:'long',day:'numeric'});
-  const doc=new jsPDF(); pdfBase(doc,'Official Receipt',ref,issued);
-  let y=pdfRows(doc,[['Receipt number',ref],['Date paid',when],['Received from',a.client_name],['Appointment date',a.appointment_date],['Payment method',pMethod.value]],18,72,174);
-  doc.setFillColor(14,59,49); doc.rect(18,y+4,174,30,'F'); doc.setFillColor(176,141,87); doc.rect(18,y+4,2,30,'F');
-  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(169,189,180); doc.text('Amount paid',28,y+15);
-  doc.setFont('times','bold'); doc.setFontSize(26); doc.setTextColor(242,236,221); doc.text('PHP '+amt.toLocaleString('en-PH',{minimumFractionDigits:2}),28,y+27);
-  doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(20,32,28); doc.text('Thank you for your payment. Please keep this receipt for your records.',18,y+48);
-  pdfFooter(doc,ref);
-  let infoPdf=null;
-  if(pSendInfo.checked){
-    const p=lkPerson; let photo=null;
-    if(p.photo_url){ try{ photo=await toDataUrl(await (await fetch(p.photo_url)).blob()); }catch(e){} }
-    if(photo) photo=await squarePhoto(photo);
-    const qr=await qrFor(a);
-    const d=new jsPDF(); pdfBase(d,'Basic Information Record',ref,issued);
-    const pl=d.splitTextToSize(DOC_PURPOSE,166), bh=pl.length*5+14;
-    d.setFillColor(244,239,226); d.rect(18,62,174,bh,'F'); d.setFillColor(176,141,87); d.rect(18,62,1.5,bh,'F');
-    d.setFont('helvetica','bold'); d.setFontSize(9); d.setTextColor(14,59,49); d.text('Purpose of this document',24,69);
-    d.setFont('helvetica','normal'); d.setFontSize(10); d.setTextColor(20,32,28); d.text(pl,24,75.5);
-    const y0=62+bh+12;
-    d.setFont('times','bold'); d.setFontSize(13); d.setTextColor(14,59,49); d.text('Registered details',18,y0-3);
-    pdfRows(d,[['Member reference',refId(p.id)],['Full name',p.full_name],['Date of birth',p.birth_date],['Contact number',p.contact],['Email',p.email],['Address',p.address],['Appointment date',a.appointment_date],['Purpose of visit',a.reason]],18,y0+6,118);
-    d.setDrawColor(176,141,87); d.setLineWidth(.5); d.rect(141,y0,50.8,50.8);
-    if(photo){ try{ d.addImage(photo, photo.includes('image/png')?'PNG':'JPEG',141,y0,50.8,50.8); }catch(e){ d.setFontSize(9); d.text('Photo unsupported',150,y0+26); } }
-    else { d.setFont('helvetica','normal'); d.setFontSize(9); d.setTextColor(92,107,100); d.text('No photo on file',152,y0+26); }
-    d.setFont('helvetica','normal'); d.setFontSize(8); d.setTextColor(92,107,100); d.text('2 x 2 ID photo',166.4,y0+55,{align:'center'});
-    d.addImage(qr,'PNG',156,y0+62,32,32); d.text('Scan to verify appointment',172,y0+98,{align:'center'});
-    d.setDrawColor(20,32,28); d.setLineWidth(.3); d.line(18,262,95,262); d.text('Authorized signature',18,267);
-    pdfFooter(d,ref);
-    infoPdf=d.output('datauristring');
-  }
-  const err=await callFn({ type:'receipt', org:ORG_NAME, to:a.email, name:a.client_name, receiptNo:ref, amount:amt.toFixed(2), method:pMethod.value,
-    paidAt:when, apptDate:a.appointment_date, pdfDataUrl:doc.output('datauristring'), infoPdfDataUrl:infoPdf });
-  show('Marked as paid.'+(err?` <span class="text-orange-600">Email NOT sent: ${esc(err)}</span>`:` Receipt${infoPdf?' + info file':''} emailed to <b>${esc(a.email)}</b>.`), err?'text-slate-700':'text-green-600');
+  if(error) return show(esc(error.message)+' (did you run schema-update.sql?)','text-red-500');
+  const qrDataUrl=a.plan_id?await qrFor(a):null; // membership QR pass is released only after payment
+  const err=await callFn({ type:'receipt', org:ORG_NAME, to:a.email, name:a.client_name, receiptNo:'R-'+a.id.slice(0,8).toUpperCase(), amount:amt.toFixed(2),
+    method:pMethod.value, paidAt:new Date(paidAt).toLocaleString(), apptDate:a.appointment_date, plan:a.plan_name, until:a.member_end, qrDataUrl });
+  show('Marked as paid.'+(err?` <span class="text-orange-600">Email NOT sent: ${esc(err)}</span>`:` Receipt${qrDataUrl?' and QR pass':''} emailed to <b>${esc(a.email)}</b>.`), err?'text-slate-700':'text-green-600');
   await loadAppointments(); selectPay(a.id);
 }
-
-(function(){ const d=new Date(); loginDay.textContent=d.getDate();
-  loginMonth.textContent=d.toLocaleString('en',{month:'long',year:'numeric'}); loginWeek.textContent=d.toLocaleString('en',{weekday:'long'}); })();
-
-/* ================= HOTEL RESERVATIONS ================= */
-let rooms=[], resv=[];
+/* ================= PREMIUM MEMBERSHIP ================= */
+let plans=[];
 const peso=n=>'PHP '+Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2});
-const nightsOf=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
-const holds=x=>x.status!=='cancelled'&&x.status!=='checked_out';
-function hSay(el,t,c){ el.innerHTML=t; el.className='text-sm mt-3 '+c; el.classList.remove('hidden'); }
-async function loadRes(){
-  const [a,b]=await Promise.all([sb.from('rooms').select('*').order('room_no'),sb.from('reservations').select('*').order('check_in',{ascending:false})]);
-  if(a.error||b.error) hSay(hMsg,esc((a.error||b.error).message)+' (did you run hotel-tables.sql?)','text-red-500');
-  rooms=a.data||[]; resv=b.data||[]; renderRooms(); renderRes(); updateAvail();
+function addMonths(ds,m){ const d=new Date(ds+'T00:00:00'); d.setMonth(d.getMonth()+m); return localDate(d); }
+async function loadPlans(){ const { data }=await sb.from('plans').select('*').order('price'); plans=(data||[]); renderPlans(); fillPlans(); }
+function fillPlans(){
+  const keep=aPlan.value, act=plans.filter(p=>p.active!==false);
+  aPlan.innerHTML=act.map(p=>`<option value="${p.id}">${esc(p.name)}, ${peso(p.price)}, ${p.months} mo</option>`).join('')||'<option value="">No plans yet. Add one below.</option>';
+  if(act.some(p=>p.id===keep)) aPlan.value=keep; planChanged();
 }
-function freeRooms(inn,out,guests){
-  return rooms.filter(r=>r.active!==false&&r.capacity>=guests&&!resv.some(x=>x.room_id===r.id&&holds(x)&&x.check_in<out&&x.check_out>inn));
+function typeChanged(){ planBox.classList.toggle('hidden',aType.value!=='member'); planChanged(); }
+function planChanged(){
+  const p=plans.find(x=>x.id===aPlan.value);
+  if(aType.value!=='member'||!p){ planInfo.innerHTML=''; return; }
+  planInfo.innerHTML=esc(p.perks||'')+(aDate.value?`<br><b style="color:var(--em)">Valid ${esc(aDate.value)} to ${addMonths(aDate.value,p.months)}</b>`:'');
 }
-function updateAvail(){
-  const inn=hIn.value, out=hOut.value, g=+hGuests.value||1, today=localDate(new Date());
-  hIn.min=today; if(inn){ const d=new Date(inn); d.setDate(d.getDate()+1); hOut.min=localDate(d); }
-  if(!inn||!out||out<=inn){ hRoom.innerHTML=''; hAvail.textContent=(inn&&out)?'Check-out must be after check-in.':'Pick your dates to see available rooms.'; hTotal.textContent=''; return; }
-  const f=freeRooms(inn,out,g), keep=hRoom.value;
-  hRoom.innerHTML=f.map(r=>`<option value="${r.id}">Room ${esc(r.room_no)}, ${esc(r.room_type||'Standard')}, ${peso(r.rate)}/night</option>`).join('');
-  if(f.some(r=>r.id===keep)) hRoom.value=keep;
-  hAvail.innerHTML=`${nightsOf(inn,out)} night(s). `+(f.length?`<b style="color:var(--em)">${f.length} room(s) available.</b>`:'<b class="text-red-500">No room is free for these dates.</b>'); updateTotal();
+function renderPlans(){
+  plansList.innerHTML=plans.filter(p=>p.active!==false).map(p=>`<div class="border rounded-lg p-3 bg-slate-50 flex items-start justify-between gap-2"><div>
+    <div class="serif" style="font-size:1.1rem">${esc(p.name)}</div><div class="text-xs text-slate-500">${peso(p.price)} for ${p.months} month(s)</div>
+    <div class="text-xs mt-1">${esc(p.perks||'')}</div></div><button onclick="delPlan('${p.id}')" class="danger text-xs px-3 py-1.5">Remove</button></div>`).join('')||'<p class="text-slate-400">No plans yet.</p>';
 }
-function updateTotal(){
-  const r=rooms.find(x=>x.id===hRoom.value); hTotal.textContent=r?'Total '+peso(r.rate*nightsOf(hIn.value,hOut.value)):'';
+async function addPlan(){
+  const say=(t,c)=>{ plMsg.innerHTML=t; plMsg.className='text-sm mb-2 '+c; plMsg.classList.remove('hidden'); };
+  if(!plName.value.trim()||plPrice.value==='') return say('Enter a plan name and price.','text-red-500');
+  const { error }=await sb.from('plans').insert({ name:plName.value.trim(), price:+plPrice.value, months:+plMonths.value||12, perks:plPerks.value.trim()||null });
+  if(error) return say(esc(error.code==='23505'?'A plan with that name already exists.':error.message+' (did you run membership.sql?)'),'text-red-500');
+  ['plName','plPrice','plMonths','plPerks'].forEach(i=>document.getElementById(i).value=''); plMsg.classList.add('hidden'); await loadPlans();
 }
-function clearRes(){ ['hIn','hOut','hName','hEmail','hContact','hNotes'].forEach(i=>document.getElementById(i).value=''); hGuests.value=1; hMsg.classList.add('hidden'); updateAvail(); }
-async function reserve(){
-  const r=rooms.find(x=>x.id===hRoom.value);
-  if(!hName.value.trim()) return hSay(hMsg,'Enter the guest name.','text-red-500');
-  if(!r||!hIn.value||!hOut.value||hOut.value<=hIn.value) return hSay(hMsg,'Choose valid dates and an available room.','text-red-500');
-  const n=nightsOf(hIn.value,hOut.value), total=r.rate*n;
-  hSay(hMsg,'Saving...','text-slate-500');
-  const row={ room_id:r.id, guest_name:hName.value.trim(), guest_email:hEmail.value.trim()||null, guest_contact:hContact.value.trim()||null,
-    guests:+hGuests.value||1, check_in:hIn.value, check_out:hOut.value, total, notes:hNotes.value.trim()||null };
-  const { error } = await sb.from('reservations').insert(row);
-  if(error) return hSay(hMsg,esc(error.code==='23P01'?'That room was just booked for these dates. Pick another.':error.message),'text-red-500');
-  let err=''; if(row.guest_email) err=await callFn({ type:'reservation', org:ORG_NAME, to:row.guest_email, name:row.guest_name, room:r.room_no, roomType:r.room_type||'Standard', checkIn:row.check_in, checkOut:row.check_out, nights:n, total:total.toFixed(2) });
-  await loadRes(); clearRes();
-  hSay(hMsg,`Reserved Room ${esc(r.room_no)} for <b>${esc(row.guest_name)}</b>, ${n} night(s), ${peso(total)}.`+(row.guest_email?(err?` <span class="text-orange-600">Email NOT sent: ${esc(err)}</span>`:' Confirmation emailed.'):''), 'text-green-600');
-}
-function renderRes(){
-  const label={booked:'Booked',checked_in:'Checked in',checked_out:'Checked out',cancelled:'Cancelled'};
-  resList.innerHTML=resv.length?resv.map(x=>{ const r=rooms.find(q=>q.id===x.room_id)||{};
-    const btn=(t,st,cls)=>`<button onclick="setRes('${x.id}','${st}')" class="${cls||'bg-slate-200 hover:bg-slate-300'} text-xs px-3 py-1.5 font-semibold">${t}</button>`;
-    return `<div class="border rounded-lg p-3 bg-slate-50"><div class="font-semibold">Room ${esc(r.room_no)} <span class="text-xs font-normal text-slate-400">${esc(label[x.status]||x.status)}${x.paid?', paid':''}</span></div>
-      <div>${esc(x.guest_name)} <span class="text-slate-500">${esc(x.guest_contact||'')}</span></div>
-      <div class="text-xs text-slate-500">${esc(x.check_in)} to ${esc(x.check_out)}, ${nightsOf(x.check_in,x.check_out)} night(s), ${peso(x.total)}</div>
-      <div class="flex flex-wrap gap-2 mt-2">${x.status==='booked'?btn('Check in','checked_in'):''}${x.status==='checked_in'?btn('Check out','checked_out'):''}
-        ${holds(x)?`<button onclick="payRes('${x.id}',${!x.paid})" class="bg-slate-200 hover:bg-slate-300 text-xs px-3 py-1.5 font-semibold">${x.paid?'Mark unpaid':'Mark paid'}</button>`:''}${x.status==='booked'?btn('Cancel','cancelled','danger'):''}</div></div>`; }).join(''):'<p class="text-slate-400">No reservations yet.</p>';
-}
-async function setRes(id,st){
-  if(st==='cancelled'&&!confirm('Cancel this reservation? The room opens up again.')) return;
-  const { error } = await sb.from('reservations').update({status:st}).eq('id',id);
-  if(error) return hSay(hMsg,esc(error.message),'text-red-500'); await loadRes();
-}
-async function payRes(id,v){ const { error }=await sb.from('reservations').update({paid:v}).eq('id',id); if(error) return hSay(hMsg,esc(error.message),'text-red-500'); await loadRes(); }
-function renderRooms(){
-  const t=localDate(new Date());
-  roomsList.innerHTML=rooms.length?rooms.map(r=>{ const occ=resv.some(x=>x.room_id===r.id&&holds(x)&&x.check_in<=t&&x.check_out>t);
-    return `<div class="border rounded-lg p-3 bg-slate-50 flex items-center justify-between gap-2"><div><div class="font-semibold">Room ${esc(r.room_no)} <span class="text-xs font-normal ${occ?'text-red-500':'text-green-700'}">${occ?'Occupied today':'Free today'}</span></div>
-      <div class="text-xs text-slate-500">${esc(r.room_type||'Standard')}, ${peso(r.rate)}/night, sleeps ${r.capacity}</div></div>
-      <button onclick="delRoom('${r.id}')" class="danger text-xs px-3 py-1.5">Remove</button></div>`; }).join(''):'<p class="text-slate-400">No rooms yet. Add your first room above.</p>';
-}
-async function addRoom(){
-  if(!mNo.value.trim()||!(+mRate.value>=0)||mRate.value==='') return hSay(mMsg,'Enter a room number and a rate.','text-red-500');
-  const { error }=await sb.from('rooms').insert({ room_no:mNo.value.trim(), room_type:mType.value.trim()||null, rate:+mRate.value, capacity:+mCap.value||2 });
-  if(error) return hSay(mMsg,esc(error.code==='23505'?'That room number already exists.':error.message),'text-red-500');
-  ['mNo','mType','mRate','mCap'].forEach(i=>document.getElementById(i).value=''); mMsg.classList.add('hidden'); await loadRes();
-}
-async function delRoom(id){
-  if(!confirm('Remove this room?')) return;
-  const { error }=await sb.from('rooms').delete().eq('id',id);
-  if(error) return hSay(mMsg,'This room has reservations, so it cannot be removed.','text-red-500'); await loadRes();
+async function delPlan(id){
+  if(!confirm('Remove this plan? Existing memberships keep their details.')) return;
+  const r=await sb.from('plans').delete().eq('id',id);
+  if(r.error) await sb.from('plans').update({active:false}).eq('id',id); // in use: hide instead
+  await loadPlans();
 }
 </script>
 </body>
