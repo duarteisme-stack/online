@@ -24,15 +24,49 @@ body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:c
 </head>
 <body>
   <div class="pass" id="pass">
-    <div class="top"><div style="font-family:'Bodoni Moda',serif;font-size:1.1rem;color:var(--brass2);margin-bottom:.9rem">Deloko</div><div class="seal" id="seal">&#10003;</div><h1 id="title">Valid appointment</h1><p id="sub">Present this pass at the front desk.</p></div>
+    <div class="top"><div style="font-family:'Bodoni Moda',serif;font-size:1.1rem;color:var(--brass2);margin-bottom:.9rem">Deloko</div><div class="seal" id="seal">&#10003;</div><h1 id="title">Valid membership</h1><p id="sub">Present this pass at the front desk.</p></div>
     <div class="body" id="info"></div>
   </div>
 <script>
   const esc = t => String(t??'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const PRESET={silver:'#8E9AA8',gold:'#C49A2C',platinum:'#5B6B7F',bronze:'#A86B3C',diamond:'#3E8FB0'};
+  const hslHex=(h,s,l)=>{ s/=100; l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1))); return '#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join(''); };
+  const nameHash=n=>{ let h=0; for(const ch of String(n).toLowerCase()) h=(h*31+ch.charCodeAt(0))%3600; return h; };
+  const themeFor=(name,color)=>{ if(/^#[0-9a-f]{6}$/i.test(color||'')) return color; const n=String(name||'').toLowerCase(); for(const k in PRESET) if(n.includes(k)) return PRESET[k]; return hslHex(nameHash(n)%360,55,38); };
+  const mix=(a,b,t)=>{ const p=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16)), A=p(a), B=p(b); return '#'+A.map((q,i)=>Math.round(q+(B[i]-q)*t).toString(16).padStart(2,'0')).join(''); };
+  const lum=h=>{ const [r,g,b]=[1,3,5].map(i=>parseInt(h.slice(i,i+2),16)/255); return .299*r+.587*g+.114*b; };
+  const PAT={ stripes:['repeating-linear-gradient(135deg,rgba(255,255,255,.16) 0 2px,transparent 2px 10px)','auto'],
+    grid:['linear-gradient(rgba(255,255,255,.16) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.16) 1px,transparent 1px)','14px 14px,14px 14px'],
+    dots:['radial-gradient(rgba(255,255,255,.26) 1.5px,transparent 1.5px)','12px 12px'],
+    rings:['repeating-radial-gradient(circle at 100% 0,rgba(255,255,255,.16) 0 2px,transparent 2px 14px)','auto'] };
+  function applyTheme(plan,color){
+    const c=themeFor(plan,color), c1=mix(c,'#000000',.45), c2=mix(c,'#ffffff',.45), n=String(plan).toLowerCase();
+    const key=n.includes('gold')?'stripes':n.includes('silver')?'grid':Object.keys(PAT)[nameHash(n)%4], pat=PAT[key];
+    const top=document.querySelector('.top'), ink=lum(c)>.5?'#1A1408':'#FFFFFF';
+    top.style.background=`${pat[0]},linear-gradient(135deg,${c1} 0%,${c} 42%,${c2} 52%,${c} 62%,${c1} 100%)`;
+    top.style.backgroundSize=`${pat[1]},100% 100%`; top.style.borderBottomColor=c2; top.style.color=ink;
+    top.querySelectorAll('div,p').forEach(e=>e.style.color='inherit');
+    seal.style.borderColor='currentColor'; seal.style.fontFamily="'Bodoni Moda',serif"; seal.style.fontSize='1.4rem'; seal.textContent=String(plan).trim().charAt(0).toUpperCase();
+    document.querySelectorAll('.date').forEach(e=>e.style.color=c1);
+    document.getElementById('pass').style.borderColor=c;
+  }
   const row=(k,v,cls)=>`<div class="row"><div class="k">${k}</div><div class="v ${cls||''}">${esc(v)}</div></div>`;
   try{
     const d = JSON.parse(decodeURIComponent(atob(new URLSearchParams(location.search).get('d'))));
-    info.innerHTML = row('Appointment date',d.date,'date') + row('Name',d.name) + row('Email',d.email) + (d.reason?row('Reason',d.reason):'');
+    const n=new Date(), today=n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');
+    if(d.plan){
+      const start=d.start||d.date, exp=d.until&&d.until<today, soon=!exp&&start>today;
+      title.textContent=exp?'Membership expired':d.plan+' Member';
+      sub.textContent=exp?'This membership is no longer active.':soon?'Not active yet. Starts on '+start+'.':'Active member. Present this pass at the front desk.';
+      info.innerHTML=row('Membership',d.plan,'date')+row('Valid from',start)+row('Valid until',d.until)+row('Name',d.name)+row('Email',d.email);
+      if(exp){ pass.classList.add('bad'); seal.innerHTML='&#10005;'; } else applyTheme(d.plan,d.color);
+    } else {
+      const past=d.date<today, now=d.date===today;
+      title.textContent=past?'Date has passed':now?'Valid today':'Scheduled';
+      sub.textContent=past?'This membership date is over.':now?'Present this pass at the front desk.':'Valid on '+d.date+'.';
+      if(past){ pass.classList.add('bad'); seal.innerHTML='&#10005;'; }
+      info.innerHTML=row('Membership date',d.date,'date')+row('Name',d.name)+row('Email',d.email)+(d.reason?row('Reason',d.reason):'');
+    }
   }catch(e){
     pass.classList.add('bad'); seal.innerHTML='&#10005;'; title.textContent='Invalid code'; sub.textContent='This QR code could not be read.'; info.innerHTML='';
   }

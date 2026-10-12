@@ -118,7 +118,7 @@ body button.danger:hover:not(:disabled){background:#8A2B2B;border-color:#8A2B2B;
     </div>
     <div class="max-w-5xl mx-auto px-4 flex gap-2 pb-3">
       <button id="tabDash" onclick="showTab('dash')" class="tab-btn active px-4 py-2 rounded-lg text-sm font-semibold bg-slate-200">Dashboard</button>
-      <button id="tabAppt" onclick="showTab('appt')" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold bg-slate-200">Appointment</button>
+      <button id="tabAppt" onclick="showTab('appt')" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold bg-slate-200">Membership</button>
       <button id="tabPaid" onclick="showTab('paid')" class="tab-btn px-4 py-2 rounded-lg text-sm font-semibold bg-slate-200">Paid</button>
     </div>
   </header>
@@ -176,7 +176,7 @@ body button.danger:hover:not(:disabled){background:#8A2B2B;border-color:#8A2B2B;
     <section id="apptTab" class="hidden">
       <div class="grid md:grid-cols-2 gap-4">
         <div class="bg-white rounded-2xl shadow p-5">
-          <h2 class="font-bold text-slate-700 mb-3">📋 Appointment Request</h2>
+          <h2 class="font-bold text-slate-700 mb-3">Membership Request</h2>
           <label class="text-xs font-semibold text-slate-500">Your Name</label>
           <input id="aName" oninput="lookupAppt()" autocomplete="off" class="w-full border rounded-lg px-3 py-2 mt-1 mb-3" placeholder="Full name">
           <div id="aLookup"></div>
@@ -201,40 +201,41 @@ body button.danger:hover:not(:disabled){background:#8A2B2B;border-color:#8A2B2B;
           </div>
 
           <label class="text-xs font-semibold text-slate-500 block mt-3">Booking type</label>
-          <select id="aType" onchange="typeChanged()" class="w-full border rounded-lg px-3 py-2 mt-1"><option value="">Standard appointment</option><option value="member">Premium membership</option></select>
+          <select id="aType" onchange="typeChanged()" class="w-full border rounded-lg px-3 py-2 mt-1"><option value="">Standard membership</option><option value="member">Premium membership</option></select>
           <div id="planBox" class="hidden mt-2"><select id="aPlan" onchange="planChanged()" class="w-full border rounded-lg px-3 py-2"></select>
             <p id="planInfo" class="text-xs mt-1" style="color:var(--mute)"></p></div>
-          <label class="text-xs font-semibold text-slate-500 block mt-3">Start / Appointment Date</label>
+          <label class="text-xs font-semibold text-slate-500 block mt-3">Start Date</label>
           <input id="aDate" type="date" onchange="checkDate()" class="w-full border rounded-lg px-3 py-2 mt-1">
           <p id="availInfo" class="text-xs text-slate-500 mt-1"></p>
           <div id="cal" class="cal"></div>
           <p id="dateWarn" class="text-xs text-red-500 mt-1 hidden">That date is already booked. Pick another.</p>
-          <label class="text-xs font-semibold text-slate-500 block mt-3">Reason for Appointment</label>
+          <label class="text-xs font-semibold text-slate-500 block mt-3">Reason for Membership</label>
           <textarea id="aReason" rows="3" class="w-full border rounded-lg px-3 py-2 mt-1" placeholder="Purpose of visit..."></textarea>
 
           <div class="flex gap-2 mt-4">
             <button id="submitBtn" onclick="submitAppointment()" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg">Submit Request</button>
             <button onclick="clearForm()" class="bg-slate-200 hover:bg-slate-300 font-semibold px-4 rounded-lg">New / Clear</button>
-            <button id="cancelApptBtn" onclick="deleteAppt()" class="danger hidden px-4 rounded-lg">Cancel Appt</button>
+            <button id="cancelApptBtn" onclick="deleteAppt()" class="danger hidden px-4 rounded-lg">Cancel Membership</button>
           </div>
           <p id="apptMsg" class="text-sm mt-3 hidden"></p>
           <div id="qrResult" class="hidden mt-4 text-center border rounded-xl p-4 bg-slate-50">
             <p class="text-xs font-bold text-slate-500 uppercase mb-2">Your QR Code</p>
             <img id="qrImg" class="mx-auto w-48 h-48" alt="QR code">
-            <a id="qrDownload" download="appointment-qr.png" class="inline-block mt-3 bg-slate-200 hover:bg-slate-300 text-sm font-semibold px-4 py-2 rounded-lg">Download QR</a>
+            <a id="qrDownload" download="membership-qr.png" class="inline-block mt-3 bg-slate-200 hover:bg-slate-300 text-sm font-semibold px-4 py-2 rounded-lg">Download QR</a>
           </div>
         </div>
 
         <div class="bg-white rounded-2xl shadow p-5">
-          <h2 class="font-bold text-slate-700 mb-3">Scheduled Appointments <span class="text-xs font-normal text-slate-400">(tap to edit, double-tap to delete)</span></h2>
+          <h2 class="font-bold text-slate-700 mb-3">Scheduled Memberships <span class="text-xs font-normal text-slate-400">(tap to edit, double-tap to delete)</span></h2>
           <div id="apptList" class="space-y-2 text-sm max-h-96 overflow-y-auto"></div>
         </div>
       </div>
       <div class="bg-white rounded-2xl shadow p-5 mt-4">
         <h2 class="mb-3">Membership Plans</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-3">
-          <input id="plName" class="border px-3 py-2" placeholder="Plan (Gold)"><input id="plPrice" type="number" min="0" class="border px-3 py-2" placeholder="Price">
+        <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 mb-3">
+          <input id="plName" oninput="autoColor()" class="border px-3 py-2" placeholder="Plan (Gold)"><input id="plPrice" type="number" min="0" class="border px-3 py-2" placeholder="Price">
           <input id="plMonths" type="number" min="1" class="border px-3 py-2" placeholder="Months (12)"><input id="plPerks" class="border px-3 py-2" placeholder="Perks">
+          <input id="plColor" type="color" value="#C49A2C" oninput="plTouched=true" title="Pass color" class="border w-full p-1" style="min-height:2.6rem">
           <button onclick="addPlan()" class="bg-blue-600 hover:bg-blue-700 text-white py-2 col-span-2 sm:col-span-1">Add Plan</button>
         </div>
         <p id="plMsg" class="text-sm mb-2 hidden"></p>
@@ -268,7 +269,7 @@ body button.danger:hover:not(:disabled){background:#8A2B2B;border-color:#8A2B2B;
 // ===== EDIT THESE: shown on every printed document =====
 const ORG_NAME='Deloko';
 const ORG_TAGLINE='Your address, contact number and email here';
-const DOC_PURPOSE='This record confirms the personal details registered with us. It is issued for the appointment shown below and may be presented, together with a valid ID, at the front desk as proof of your registered information.';
+const DOC_PURPOSE='This record confirms the personal details registered with us. It is issued for the membership shown below and may be presented, together with a valid ID, at the front desk as proof of your registered information.';
 const SUPABASE_URL = "https://cxpkjzrrasbfijpimtpw.supabase.co";        // e.g. https://xyz.supabase.co
 const SUPABASE_ANON_KEY = "sb_publishable_Q24bpzH_6JinQ6TTljzGEQ_fusqbutP";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -357,7 +358,7 @@ async function savePerson(mode){
 }
 async function deletePerson(){
   const p=people.find(x=>x.id===selId); if(!p) return;
-  if(!confirm(`Delete ${p.full_name} (${refId(p.id)}) permanently?\n\nTheir existing appointments are NOT deleted.`)) return;
+  if(!confirm(`Delete ${p.full_name} (${refId(p.id)}) permanently?\n\nTheir existing memberships are NOT deleted.`)) return;
   const { data, error } = await sb.from('people').delete().eq('id',p.id).select();
   if(error) return setInfoMsg(esc(error.message),'text-red-500');
   if(!data||!data.length) return setInfoMsg('Could not delete. Run delete-policies.sql in Supabase first.','text-red-500');
@@ -439,7 +440,7 @@ function renderApptList(){
       <div class="text-slate-500">${esc(a.email)} · ${esc(a.contact)}</div>
       ${a.on_behalf?`<div class="text-blue-600 text-xs mt-1">Sent by ${esc(a.requester_name)} (${esc(a.requester_relation)}) · ${esc(a.requester_email)}</div>`:''}
       ${a.reason?`<div class="text-slate-500 italic mt-1">“${esc(a.reason)}”</div>`:''}
-    </div>`).join('') : '<p class="text-slate-400">No appointments yet.</p>';
+    </div>`).join('') : '<p class="text-slate-400">No memberships yet.</p>';
 }
 function selectAppt(id){
   const a=allAppts.find(x=>x.id===id); if(!a) return;
@@ -458,13 +459,13 @@ function clearForm(keepMsg){
 }
 async function deleteAppt(){
   const a=allAppts.find(x=>x.id===editId); if(!a) return;
-  if(!confirm(`Cancel and delete the appointment of ${a.client_name} on ${a.appointment_date}?`+(a.paid?'\n\nThis one is marked PAID. Its payment record will be deleted too.':'')+'\n\nThe date becomes available again.')) return;
+  if(!confirm(`Cancel and delete the membership of ${a.client_name} on ${a.appointment_date}?`+(a.paid?'\n\nThis one is marked PAID. Its payment record will be deleted too.':'')+'\n\nThe date becomes available again.')) return;
   const { data, error } = await sb.from('appointments').delete().eq('id',a.id).select();
   const say=(t,c)=>{ apptMsg.innerHTML=t; apptMsg.className='text-sm mt-3 '+c; apptMsg.classList.remove('hidden'); };
   if(error) return say(esc(error.message),'text-red-500');
   if(!data||!data.length) return say('Could not delete. Run delete-policies.sql in Supabase first.','text-red-500');
   await loadAppointments(); clearForm(true); paySel=null; renderPaidList();
-  say('Appointment cancelled: <b>'+esc(a.client_name)+'</b>, '+esc(a.appointment_date)+' is open again.','text-green-600');
+  say('Membership cancelled: <b>'+esc(a.client_name)+'</b>, '+esc(a.appointment_date)+' is open again.','text-green-600');
 }
 async function callFn(body){
   try{ const r=await fetch(`${SUPABASE_URL}/functions/v1/send-qr-email`,{method:'POST',
@@ -489,22 +490,22 @@ async function submitAppointment(){
   if(!editId) payload.status='confirmed';
   const pl=aType.value==='member'?plans.find(x=>x.id===aPlan.value):null;
   if(aType.value==='member'&&!pl) return show('Choose a membership plan.','text-red-500');
-  Object.assign(payload,{ plan_id:pl?pl.id:null, plan_name:pl?pl.name:null, plan_price:pl?pl.price:null, member_start:pl?date:null, member_end:pl?addMonths(date,pl.months):null });
+  Object.assign(payload,{ plan_id:pl?pl.id:null, plan_name:pl?pl.name:null, plan_price:pl?pl.price:null, member_start:pl?date:null, member_end:pl?memberEnd(date,pl.months):null });
   const q = editId ? sb.from('appointments').update(payload).eq('id',editId) : sb.from('appointments').insert(payload);
   const { data, error } = await q.select().single();
-  if(error) return show(''+esc(error.message),'text-red-500');
+  if(error) return show(error.code==='23505'?'That date was just taken by someone else. Pick another date.':esc(error.message),'text-red-500');
 
-  const details={ name:data.client_name, email:data.email, date:data.appointment_date, reason:(data.reason||'').slice(0,200), plan:data.plan_name||undefined, until:data.member_end||undefined };
+  const details={ name:data.client_name, email:data.email, date:data.appointment_date, reason:(data.reason||'').slice(0,200), plan:data.plan_name||undefined, start:data.member_start||undefined, until:data.member_end||undefined, color:pl?themeFor(pl.name,pl.color):undefined };
   const base=location.origin+location.pathname.replace(/[^/]*$/,'');
   const qrText=`${base}view.html?d=${encodeURIComponent(btoa(encodeURIComponent(JSON.stringify(details))))}`;
-  const qrEl=document.createElement('div'); new QRCode(qrEl,{text:qrText,width:300,height:300,correctLevel:QRCode.CorrectLevel.M});
+  const qrEl=document.createElement('div'); new QRCode(qrEl,{text:qrText,width:300,height:300,colorDark:pl?qrDark(themeFor(pl.name,pl.color)):'#000000',correctLevel:QRCode.CorrectLevel.M});
   await new Promise(r=>setTimeout(r,300));
   const cv=qrEl.querySelector('canvas'); const qrDataUrl=cv?cv.toDataURL('image/png'):qrEl.querySelector('img').src;
   const hold=!!data.plan_name&&!data.paid; // unpaid membership: no QR yet
   if(!hold){ qrImg.src=qrDataUrl; qrDownload.href=qrDataUrl; qrResult.classList.remove('hidden'); }
 
-  const err=await callFn(hold?{ type:'pending', org:ORG_NAME, to:data.email, name:data.client_name, plan:data.plan_name, start:data.member_start, until:data.member_end, price:Number(data.plan_price||0).toFixed(2) }:{ to:data.email, name:data.client_name, date:data.appointment_date, qrDataUrl, qrText, plan:data.plan_name, until:data.member_end });
-  show(`${data.plan_name?esc(data.plan_name)+' membership':'Appointment'} ${editId?'updated':'confirmed'} for <b>${esc(data.appointment_date)}</b>.`+
+  const err=await callFn(hold?{ type:'pending', org:ORG_NAME, to:data.email, name:data.client_name, plan:data.plan_name, start:data.member_start, until:data.member_end, price:Number(data.plan_price||0).toFixed(2), color:pl?qrDark(themeFor(pl.name,pl.color)):undefined }:{ to:data.email, name:data.client_name, date:data.appointment_date, qrDataUrl, qrText, plan:data.plan_name, until:data.member_end, color:pl?qrDark(themeFor(pl.name,pl.color)):undefined });
+  show(`${data.plan_name?esc(data.plan_name)+' membership':'Membership'} ${editId?'updated':'confirmed'} for <b>${esc(data.appointment_date)}</b>.`+
     (err?` <span class="text-orange-600">Email NOT sent: ${esc(err)}</span>`:` ${hold?'Waiting for payment. The QR pass is emailed after payment. Notice sent to':'QR emailed to'} <b>${esc(data.email)}</b>.`), err?'text-slate-700':'text-green-600');
   await loadAppointments(); clearForm(true);
 }
@@ -515,13 +516,20 @@ function renderPaidList(){
     <div onclick="selectPay('${a.id}')" class="border rounded-lg p-3 cursor-pointer hover:bg-green-50 ${a.id===paySel?'bg-green-50 border-green-500':'bg-slate-50'}">
       <div class="font-semibold text-slate-700">${esc(a.client_name)}
         <span class="text-xs px-2 py-0.5 rounded-full ml-1 ${a.paid?'bg-green-100 text-green-700':'bg-orange-100 text-orange-700'}">${a.paid?'Paid':'Unpaid'}</span> <span class="text-xs text-slate-400 font-normal">#${a.id.slice(0,6).toUpperCase()}</span></div>
-      <div class="text-slate-500 text-xs">${esc(a.appointment_date)} · ${esc(a.email)}${a.paid?' · PHP '+Number(a.amount||0).toFixed(2)+' ('+esc(a.payment_method||'')+')':''}</div>
+      <div class="text-slate-500 text-xs">${esc(a.appointment_date)} · ${esc(a.email)}${a.paid?' · PHP '+Number(a.amount||0).toFixed(2)+' ('+esc(a.payment_method||'')+')':''}${a.plan_name?' · '+esc(a.plan_name)+(a.paid?'':' · due '+peso(a.plan_price)):''}</div>
     </div>`).join('') : '<p class="text-slate-400">No customers yet.</p>';
 }
 function selectPay(id){
   const a=allAppts.find(x=>x.id===id); if(!a) return; paySel=id;
-  payWho.innerHTML=`Customer: <b>${esc(a.client_name)}</b> (${esc(a.email)})`+(a.paid?' — already paid, you can resend the receipt':'');
-  pAmount.value=a.amount||a.plan_price||''; pMethod.value=a.payment_method||'Cash'; payMsg.classList.add('hidden'); renderPaidList();
+  const pl=plans.find(x=>x.id===a.plan_id), price=a.plan_price??(pl?pl.price:null), today=localDate(new Date());
+  let start=a.member_start||a.appointment_date, end=a.member_end;
+  if(a.plan_id&&!a.paid&&pl&&today>start){ start=today; end=memberEnd(start,pl.months); }
+  payWho.innerHTML=`Customer: <b>${esc(a.client_name)}</b> (${esc(a.email)})`+
+    (a.plan_id?`<div class="mt-2 p-3 rounded" style="background:#F4EFE2"><div class="serif" style="font-size:1.15rem">${esc(a.plan_name)} membership</div>
+      <div class="text-xs">Valid ${esc(start)} to ${esc(end)}</div><div class="text-sm mt-1">Amount due: <b>${peso(price)}</b></div></div>`
+      :'<div class="text-xs mt-1">Standard membership. No plan fee, enter the amount.</div>')+
+    (a.paid?'<div class="text-xs mt-1" style="color:var(--em2)">Already paid. You can resend the receipt.</div>':'');
+  pAmount.value=a.amount??price??''; pMethod.value=a.payment_method||'Cash'; payMsg.classList.add('hidden'); renderPaidList();
 }
 function personCard(p){
   return `<div class="flex items-center gap-3">${p.photo_url?`<img src="${esc(p.photo_url)}" class="w-14 h-14 rounded object-cover border">`:'<div class="w-14 h-14 rounded bg-slate-200"></div>'}
@@ -529,10 +537,11 @@ function personCard(p){
     DOB ${esc(p.birth_date)}<br>${esc(p.email||'—')} · ${esc(p.contact||'—')}<br>${esc(p.address||'No address')}</div></div>`;
 }
 async function qrFor(a){
-  const details={ name:a.client_name, email:a.email, date:a.appointment_date, reason:(a.reason||'').slice(0,200), plan:a.plan_name||undefined, until:a.member_end||undefined };
+  const pl0=plans.find(x=>x.id===a.plan_id), col=a.plan_name?themeFor(a.plan_name,pl0&&pl0.color):undefined;
+  const details={ name:a.client_name, email:a.email, date:a.appointment_date, reason:(a.reason||'').slice(0,200), plan:a.plan_name||undefined, start:a.member_start||undefined, until:a.member_end||undefined, color:col };
   const base=location.origin+location.pathname.replace(/[^/]*$/,'');
   const el=document.createElement('div');
-  new QRCode(el,{ text:`${base}view.html?d=${encodeURIComponent(btoa(encodeURIComponent(JSON.stringify(details))))}`, width:200, height:200, correctLevel:QRCode.CorrectLevel.M });
+  new QRCode(el,{ text:`${base}view.html?d=${encodeURIComponent(btoa(encodeURIComponent(JSON.stringify(details))))}`, width:200, height:200, colorDark:col?qrDark(col):'#000000', correctLevel:QRCode.CorrectLevel.M });
   await new Promise(r=>setTimeout(r,250));
   const cv=el.querySelector('canvas'); return cv?cv.toDataURL('image/png'):el.querySelector('img').src;
 }
@@ -541,18 +550,41 @@ async function markPaid(){
   const a=allAppts.find(x=>x.id===paySel); if(!a) return show('Select a customer first.','text-red-500');
   const amt=parseFloat(pAmount.value); if(!(amt>0)) return show('Enter the amount paid.','text-red-500');
   show('Saving and sending...','text-slate-500');
-  const paidAt=a.paid_at||new Date().toISOString();
-  const { error } = await sb.from('appointments').update({ paid:true, amount:amt, payment_method:pMethod.value, paid_at:paidAt }).eq('id',a.id);
+  const paidAt=a.paid_at||new Date().toISOString(), pl=plans.find(x=>x.id===a.plan_id), today=localDate(new Date());
+  let start=a.member_start||a.appointment_date, end=a.member_end;
+  if(a.plan_id&&!a.paid&&pl&&today>start){ start=today; end=memberEnd(start,pl.months); } // paid after the booked start: the term runs from today
+  const upd={ paid:true, amount:amt, payment_method:pMethod.value, paid_at:paidAt };
+  if(a.plan_id){ upd.member_start=start; upd.member_end=end; }
+  const { error } = await sb.from('appointments').update(upd).eq('id',a.id);
   if(error) return show(esc(error.message)+' (did you run schema-update.sql?)','text-red-500');
-  const qrDataUrl=a.plan_id?await qrFor(a):null; // membership QR pass is released only after payment
+  const m={ ...a, member_start:start, member_end:end };
+  const qrDataUrl=a.plan_id?await qrFor(m):null; // membership QR pass is released only after payment
   const err=await callFn({ type:'receipt', org:ORG_NAME, to:a.email, name:a.client_name, receiptNo:'R-'+a.id.slice(0,8).toUpperCase(), amount:amt.toFixed(2),
-    method:pMethod.value, paidAt:new Date(paidAt).toLocaleString(), apptDate:a.appointment_date, plan:a.plan_name, until:a.member_end, qrDataUrl });
-  show('Marked as paid.'+(err?` <span class="text-orange-600">Email NOT sent: ${esc(err)}</span>`:` Receipt${qrDataUrl?' and QR pass':''} emailed to <b>${esc(a.email)}</b>.`), err?'text-slate-700':'text-green-600');
+    method:pMethod.value, paidAt:new Date(paidAt).toLocaleString(), apptDate:a.appointment_date, plan:a.plan_name, start, until:end, qrDataUrl,
+    color:a.plan_name?qrDark(themeFor(a.plan_name,(pl||{}).color)):undefined });
+  show('Marked as paid.'+(a.plan_id?` Membership runs <b>${esc(start)}</b> to <b>${esc(end)}</b>.`:'')+(err?` <span class="text-orange-600">Email NOT sent: ${esc(err)}</span>`:` Receipt${qrDataUrl?' and QR pass':''} emailed to <b>${esc(a.email)}</b>.`), err?'text-slate-700':'text-green-600');
   await loadAppointments(); selectPay(a.id);
 }
 /* ================= PREMIUM MEMBERSHIP ================= */
 let plans=[];
+/*THEME*/
+const PRESET={silver:'#8E9AA8',gold:'#C49A2C',platinum:'#5B6B7F',bronze:'#A86B3C',diamond:'#3E8FB0'};
+function hslHex(h,s,l){ s/=100; l/=100; const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l), f=n=>l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)));
+  return '#'+[f(0),f(8),f(4)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join(''); }
+function nameHash(n){ let h=0; for(const ch of String(n).toLowerCase()) h=(h*31+ch.charCodeAt(0))%3600; return h; }
+function themeFor(name,color){
+  if(/^#[0-9a-f]{6}$/i.test(color||'')) return color;
+  const n=String(name||'').toLowerCase(); for(const k in PRESET) if(n.includes(k)) return PRESET[k];
+  return hslHex(nameHash(n)%360,55,38);
+}
+function mix(a,b,t){ const p=x=>[1,3,5].map(i=>parseInt(x.slice(i,i+2),16)), A=p(a), B=p(b); return '#'+A.map((v,i)=>Math.round(v+(B[i]-v)*t).toString(16).padStart(2,'0')).join(''); }
+function lum(hex){ const [r,g,b]=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255); return .299*r+.587*g+.114*b; }
+function qrDark(c){ return mix(c,'#000000',lum(c)>.35?.55:.25); } // dark enough for phones to scan
 const peso=n=>'PHP '+Number(n||0).toLocaleString('en-PH',{minimumFractionDigits:2});
+function memberEnd(ds,m){ // last valid day: same date N months later, minus one day (month-end safe)
+  const d=new Date(ds+'T00:00:00'), day=d.getDate(); d.setDate(1); d.setMonth(d.getMonth()+m);
+  d.setDate(Math.min(day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate())); d.setDate(d.getDate()-1); return localDate(d);
+}
 function addMonths(ds,m){ const d=new Date(ds+'T00:00:00'); d.setMonth(d.getMonth()+m); return localDate(d); }
 async function loadPlans(){ const { data }=await sb.from('plans').select('*').order('price'); plans=(data||[]); renderPlans(); fillPlans(); }
 function fillPlans(){
@@ -564,19 +596,21 @@ function typeChanged(){ planBox.classList.toggle('hidden',aType.value!=='member'
 function planChanged(){
   const p=plans.find(x=>x.id===aPlan.value);
   if(aType.value!=='member'||!p){ planInfo.innerHTML=''; return; }
-  planInfo.innerHTML=esc(p.perks||'')+(aDate.value?`<br><b style="color:var(--em)">Valid ${esc(aDate.value)} to ${addMonths(aDate.value,p.months)}</b>`:'');
+  planInfo.innerHTML=esc(p.perks||'')+(aDate.value?`<br><b style="color:var(--em)">Valid ${esc(aDate.value)} to ${memberEnd(aDate.value,p.months)}</b>`:'');
 }
 function renderPlans(){
-  plansList.innerHTML=plans.filter(p=>p.active!==false).map(p=>`<div class="border rounded-lg p-3 bg-slate-50 flex items-start justify-between gap-2"><div>
+  plansList.innerHTML=plans.filter(p=>p.active!==false).map(p=>`<div class="border rounded-lg p-3 bg-slate-50 flex items-start justify-between gap-2" style="border-left:5px solid ${themeFor(p.name,p.color)}"><div>
     <div class="serif" style="font-size:1.1rem">${esc(p.name)}</div><div class="text-xs text-slate-500">${peso(p.price)} for ${p.months} month(s)</div>
     <div class="text-xs mt-1">${esc(p.perks||'')}</div></div><button onclick="delPlan('${p.id}')" class="danger text-xs px-3 py-1.5">Remove</button></div>`).join('')||'<p class="text-slate-400">No plans yet.</p>';
 }
+let plTouched=false;
+function autoColor(){ if(!plTouched&&plName.value.trim()) plColor.value=themeFor(plName.value.trim()); }
 async function addPlan(){
   const say=(t,c)=>{ plMsg.innerHTML=t; plMsg.className='text-sm mb-2 '+c; plMsg.classList.remove('hidden'); };
   if(!plName.value.trim()||plPrice.value==='') return say('Enter a plan name and price.','text-red-500');
-  const { error }=await sb.from('plans').insert({ name:plName.value.trim(), price:+plPrice.value, months:+plMonths.value||12, perks:plPerks.value.trim()||null });
-  if(error) return say(esc(error.code==='23505'?'A plan with that name already exists.':error.message+' (did you run membership.sql?)'),'text-red-500');
-  ['plName','plPrice','plMonths','plPerks'].forEach(i=>document.getElementById(i).value=''); plMsg.classList.add('hidden'); await loadPlans();
+  const { error }=await sb.from('plans').insert({ name:plName.value.trim(), price:+plPrice.value, months:+plMonths.value||12, perks:plPerks.value.trim()||null, color:plColor.value });
+  if(error) return say(esc(error.code==='23505'?'A plan with that name already exists.':error.message+' (did you run membership-colors.sql?)'),'text-red-500');
+  ['plName','plPrice','plMonths','plPerks'].forEach(i=>document.getElementById(i).value=''); plTouched=false; plColor.value='#C49A2C'; plMsg.classList.add('hidden'); await loadPlans();
 }
 async function delPlan(id){
   if(!confirm('Remove this plan? Existing memberships keep their details.')) return;
